@@ -337,8 +337,8 @@ export default function Cadastro() {
             </View>
 
             <Text className="text-2xl font-bold mb-4">
-              Aceite os Termos e condições e leia o Aviso de Privacidade da
-              P6Driver {tipoUsuario}
+              Aceite os Termos e condições e leia o Aviso de Privacidade do App{" "}
+              {tipoUsuario}
             </Text>
 
             <Text className="text-sm text-gray-700 mb-6">
