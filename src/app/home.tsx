@@ -4,8 +4,8 @@ import Map from "@/components/Map";
 import MenuInferiorPassageiro from "@/components/MenuInferiorPassageiro";
 import SideMenu from "@/components/SideMenu";
 import SolicitarCorrida from "@/components/SolicitarCorrida";
-import TopMenu from "@/components/TopMenu";
 import { useAuth } from "@/context/AuthProvider";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -29,15 +30,9 @@ export default function Home() {
   const [selectedTab, setSelectedTab] = useState("corrida");
   const [region, setRegion] = useState<Region | null>(null);
   const [destinationModalVisible, setDestinationModalVisible] = useState(false);
-  const [solicitacoesCorrida, setSolicitacoesCorrida] = useState(false);
 
-  // ✨ NOVO ESTADO: Armazena a região inicial do usuário (sem o ajuste de offset)
   const userInitialRegion = useRef<Region | null>(null);
-
-  // ✨ NOVO: Estado para armazenar o índice do BottomSheet
   const [bottomSheetIndex, setBottomSheetIndex] = useState<number>(0);
-
-  // ✨ NOVO: Estado do modal de ganhos foi elevado para cá
   const [ganhoModalVisivel, setGanhoModalVisivel] = useState(false);
 
   const drawerWidth = Math.round(Dimensions.get("window").width * 0.78);
@@ -51,24 +46,14 @@ export default function Home() {
     }).start();
   }, [menuVisible, drawerWidth, translateX]);
 
-  // 🔹 Função para fechar o menu
   const closeMenu = useCallback(() => {
     setMenuVisible(false);
   }, []);
 
-  // ✨ NOVA FUNÇÃO: Coordena abertura do menu e fechamento do modal
   const handleMenuOpen = () => {
-    if (ganhoModalVisivel) {
-      // Pequeno delay para deixar a animação do modal acontecer antes do SideMenu
-      setMenuVisible(true);
-      setGanhoModalVisivel(false);
-      // setTimeout(() => setGanhoModalVisivel(false), 500); // mesmo tempo da animação
-      return;
-    }
     setMenuVisible(true);
   };
 
-  // 🔹 Redirecionar para login se não estiver autenticado
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/login");
@@ -76,66 +61,69 @@ export default function Home() {
   }, [user, authLoading, router]);
 
   const handleUserLocationFound = useCallback((userRegion: Region) => {
-    console.log("handleUserLocationFound teste:");
-
     userInitialRegion.current = {
       ...userRegion,
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
     };
 
-    // 🔹 Ajuste de deslocamento vertical inicial (para o snap point 0)
     const offsetLatitude = 0.0064;
     const adjustedRegion: Region = {
       ...userRegion,
-      latitude: userRegion.latitude - offsetLatitude, // 🔹 Move o mapa para cima
+      latitude: userRegion.latitude - offsetLatitude,
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
     };
     setRegion(adjustedRegion);
   }, []);
 
-  // ✨ NOVO: Função para ajustar o mapa quando o BottomSheet muda de estado
   const handleSheetStateChange = useCallback((index: number) => {
-    console.log(usuario, "BottomSheet Index1:", index);
-    // 🔹 Atualiza o estado que será passado para o Map
     setBottomSheetIndex(index);
-    if (!userInitialRegion.current) {
-      // Garante que temos a localização do usuário antes de ajustar
-      return;
-    }
   }, []);
 
-  const onChangeBottomSheetMotorista = useCallback((index: number) => {
-    console.log(usuario, "onChangeBottomSheetMotorista Index:", index);
-    console.log(user, "user home:");
-
-    setBottomSheetIndex(index);
-    if (!userInitialRegion.current) {
-      return;
-    }
-  }, []);
-
-  // 🔹 Mostrar loading enquanto verifica autenticação
   if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+        <StatusBar style="dark" />
         <ActivityIndicator size="large" color="#000" />
         <Text style={styles.loadingText}>Verificando autenticação...</Text>
       </View>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <View style={styles.container}>
-      {/* <StatusBar style={colorScheme === "dark" ? "light" : "dark"} /> */}
+      {/* StatusBar configurada para harmonizar com o header amarelo */}
+      <StatusBar style="dark" translucent backgroundColor="#fff" />
 
-      {/* 🔹 Mapa com ajuste de posicionamento */}
+      {/* HEADER CORRIGIDO COM CORES */}
+      <View style={styles.headerFloating}>
+        <View style={styles.headerContent}>
+          <View style={styles.userInfo}>
+            <Pressable onPress={handleMenuOpen} style={styles.avatarContainer}>
+              <View style={styles.avatarPlaceholder}>
+                <Image
+                  source={{ uri: "https://i.pravatar.cc/150?img=2" }}
+                  style={styles.avatarBadge}
+                />
+                {/* <Ionicons name="person" size={24} color="#757575" /> */}
+              </View>
+              {/* Ponto de notificação vermelho clássico */}
+              <View style={styles.notificationDot} />
+            </Pressable>
+            <Text style={styles.greetingText}>
+              Olá, {usuario?.nome?.split(" ")[0] || "Usuário"}!
+            </Text>
+          </View>
+
+          <Pressable style={styles.scanButton}>
+            <Ionicons name="scan-outline" size={28} color="#000" />
+          </Pressable>
+        </View>
+      </View>
+
       <Map
         region={region}
         onRegionChange={setRegion}
@@ -144,11 +132,6 @@ export default function Home() {
         isGanhoModalVisible={ganhoModalVisivel}
       />
 
-      {/* Exibe o card se estiver recebendo chamada */}
-
-      <TopMenu onMenuPress={handleMenuOpen} />
-
-      {/* Backdrop para SideMenu */}
       {menuVisible && (
         <Pressable
           style={styles.backdrop}
@@ -156,39 +139,92 @@ export default function Home() {
         />
       )}
 
-      {/* Side Menu - zIndex menor */}
       <SideMenu visible={menuVisible} onClose={closeMenu} drawerWidth={280} />
 
-      {/* FolhaInferior */}
-      <>
-        {menuVisible && (
-          <Pressable
-            style={styles.backdrop}
-            onPress={() => setMenuVisible(false)}
-          />
-        )}
+      <FolhaInferiorPassageiro
+        onPressInput={() => setDestinationModalVisible(true)}
+        onSheetChange={handleSheetStateChange}
+      />
 
-        <FolhaInferiorPassageiro
-          onPressInput={() => setDestinationModalVisible(true)}
-          onSheetChange={handleSheetStateChange}
-        />
+      <SolicitarCorrida
+        visible={destinationModalVisible}
+        onClose={() => setDestinationModalVisible(false)}
+      />
 
-        <SolicitarCorrida
-          visible={destinationModalVisible}
-          onClose={() => setDestinationModalVisible(false)}
-        />
-
-        <MenuInferiorPassageiro
-          selectedTab={selectedTab}
-          onTabPress={setSelectedTab}
-        />
-      </>
+      <MenuInferiorPassageiro
+        selectedTab={selectedTab}
+        onTabPress={setSelectedTab}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  headerFloating: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    // Background amarelo aplicado conforme a imagem
+    backgroundColor: "#fff",
+    paddingTop: 50,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    // Sombra leve para separação visual do mapa
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatarContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 24,
+    backgroundColor: "#BDC3C7", // Tom de cinza similar ao da imagem
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  notificationDot: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
+    backgroundColor: "#FF3B30", // Vermelho vibrante
+    borderWidth: 2,
+    borderColor: "#FFD700", // Borda da mesma cor do header para parecer um recorte
+  },
+  greetingText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  scanButton: {
+    padding: 8,
+  },
   backdrop: {
     position: "absolute",
     top: 0,
@@ -196,7 +232,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.28)",
-    zIndex: 18, // zIndex para o backdrop do SideMenu
+    zIndex: 18,
   },
   loadingContainer: {
     flex: 1,
@@ -208,5 +244,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: "#666",
+  },
+  avatarBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#f8f8f8",
+    borderWidth: 1,
+    borderColor: "#eee",
   },
 });

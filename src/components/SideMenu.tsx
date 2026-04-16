@@ -1,6 +1,5 @@
 import { useAuth } from "@/context/AuthProvider";
 import { AnimationConfig, useSlideAnimation } from "@/hooks/useSlideAnimation";
-import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -254,7 +253,7 @@ export default function SideMenu({
           <View style={styles.profileSection}>
             <TouchableOpacity onPress={() => setShowPerfilUsuario(true)}>
               <Image
-                source={{ uri: "https://i.pravatar.cc/150?img=1" }}
+                source={{ uri: "https://i.pravatar.cc/150?img=2" }}
                 style={styles.avatar}
               />
             </TouchableOpacity>
@@ -263,29 +262,9 @@ export default function SideMenu({
               <Text style={styles.userName}>{user || "Diogo"}</Text>
               <Text style={styles.ratingText}> · 4,82 ★</Text>
             </View>
-
-            <TouchableOpacity style={styles.statusBadge}>
-              <View style={styles.badgeContent}>
-                <Ionicons name="shield-checkmark" size={14} color="#FFF" />
-                <Text style={styles.statusText}>Carro · Fase 3</Text>
-                <Ionicons name="chevron-forward" size={14} color="#FFF" />
-              </View>
-              <View style={styles.notificationDot} />
-            </TouchableOpacity>
-
-            <View style={styles.statsRow}>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>48%</Text>
-                <Text style={styles.statLabel}>Taxa de Aceitação</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>78%</Text>
-                <Text style={styles.statLabel}>Taxa de Finalização</Text>
-              </View>
-            </View>
+            <View style={styles.separator}/>
+     {/* <View style={styles.statDivider} /> */}
           </View>
-
           <View style={styles.menuList}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
@@ -383,7 +362,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FFF",
   },
-  statsRow: {
+  separator: {
     flexDirection: "row",
     width: "100%",
     justifyContent: "space-around",
