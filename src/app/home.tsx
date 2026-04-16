@@ -28,10 +28,8 @@ export default function Home() {
   const [abaSelecionanda, setAbaSelecionada] = useState("corrida");
   const [region, setRegion] = useState<Region | null>(null);
   const [showParaOndeVamos, setShowParaOndeVamos] = useState(false);
-
   const userInitialRegion = useRef<Region | null>(null);
   const [bottomSheetIndex, setBottomSheetIndex] = useState<number>(0);
-
   const drawerWidth = Math.round(Dimensions.get("window").width * 0.78);
   const translateX = useRef(new Animated.Value(-drawerWidth)).current;
 
