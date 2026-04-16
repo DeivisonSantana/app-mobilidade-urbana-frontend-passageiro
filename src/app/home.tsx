@@ -1,7 +1,7 @@
 // app/home.tsx
-import FolhaInferiorPassageiro from "@/components/FolhaInferiorPassageiro";
+import FolhaInferior from "@/components/FolhaInferior";
 import Map from "@/components/Map";
-import MenuInferiorPassageiro from "@/components/MenuInferiorPassageiro";
+import MenuInferior from "@/components/MenuInferior";
 import SideMenu from "@/components/SideMenu";
 import SolicitarCorrida from "@/components/SolicitarCorrida";
 import { useAuth } from "@/context/AuthProvider";
@@ -141,7 +141,7 @@ export default function Home() {
 
       <SideMenu visible={menuVisible} onClose={closeMenu} drawerWidth={280} />
 
-      <FolhaInferiorPassageiro
+      <FolhaInferior
         onPressInput={() => setDestinationModalVisible(true)}
         onSheetChange={handleSheetStateChange}
       />
@@ -151,10 +151,7 @@ export default function Home() {
         onClose={() => setDestinationModalVisible(false)}
       />
 
-      <MenuInferiorPassageiro
-        selectedTab={selectedTab}
-        onTabPress={setSelectedTab}
-      />
+      <MenuInferior selectedTab={selectedTab} onTabPress={setSelectedTab} />
     </View>
   );
 }
@@ -167,12 +164,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    // Background amarelo aplicado conforme a imagem
     backgroundColor: "#fff",
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
-    // Sombra leve para separação visual do mapa
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -201,7 +196,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 24,
-    backgroundColor: "#BDC3C7", // Tom de cinza similar ao da imagem
+    backgroundColor: "#BDC3C7",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -213,9 +208,9 @@ const styles = StyleSheet.create({
     width: 13,
     height: 13,
     borderRadius: 6.5,
-    backgroundColor: "#FF3B30", // Vermelho vibrante
+    backgroundColor: "#FF3B30",
     borderWidth: 2,
-    borderColor: "#FFD700", // Borda da mesma cor do header para parecer um recorte
+    borderColor: "#FFD700",
   },
   greetingText: {
     fontSize: 22,
