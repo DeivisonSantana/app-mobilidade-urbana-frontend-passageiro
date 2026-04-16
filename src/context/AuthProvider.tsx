@@ -1,4 +1,5 @@
 // context/AuthProvider.tsx
+import * as SecureStore from "expo-secure-store";
 import React, {
   createContext,
   ReactNode,
@@ -16,43 +17,48 @@ interface Usuario {
 }
 
 interface AuthContextType {
-  user: string | null;
+  user: Usuario | null;
   loading: boolean;
-  usuario: Usuario | null;
-  login: (username: string) => void;
+  login: (user: Usuario) => void;
   logout: () => void;
-  register: (usuario: any) => void; // Adicione esta linha
+  register: (usuario: Usuario) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  usuario: null,
   login: () => {},
   logout: () => {},
-  register: () => {}, // Adicione esta linha
+  register: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<string | null>(null);
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [user, setUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Simula busca do usuário do storage
+  // Busca o usuário do SecureStore na inicialização
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Simulando busca de usuário no AsyncStorage
-        const storedUser = await new Promise<string | null>((resolve) =>
-          setTimeout(() => {
-            // Aqui você pode verificar se há um usuário salvo
-            // Por enquanto, sempre retorna null para forçar login
-            resolve(null);
-          }, 500)
-        );
-        setUser(storedUser);
+        // Simula delay de requisição ao banco (2 segundos)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const storedUser = await SecureStore.getItemAsync("user");
+        
+        if (storedUser) {
+          try {
+            // Tenta fazer parse como JSON
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+          } catch (parseError) {
+            // Se falhar no parse, limpa o dado inválido
+            console.warn("Usuário salvo em formato inválido, limpando...");
+            await SecureStore.deleteItemAsync("user");
+            setUser(null);
+          }
+        }
       } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
+        console.error("Erro ao buscar usuário do SecureStore:", error);
         setUser(null);
       } finally {
         setLoading(false);
@@ -62,33 +68,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchUser();
   }, []);
 
-  const login = (username: string) => {
+  const login = async (userData: Usuario) => {
     setLoading(true);
-    setTimeout(() => {
-      setUser(username);
+    try {
+      setUser(userData);
+      await SecureStore.setItemAsync("user", JSON.stringify(userData));
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+    } finally {
       setLoading(false);
-      // Aqui você salvaria o usuário no AsyncStorage
-    }, 1000);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    // Aqui você limparia o AsyncStorage
+  const logout = async () => {
+    try {
+      setUser(null);
+      await SecureStore.deleteItemAsync("user");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
-  const register = (novoUsuario: Usuario) => {
+  const register = async (novoUsuario: Usuario) => {
     setLoading(true);
-    setTimeout(() => {
-      // Aqui você poderia salvar no AsyncStorage
-      setUsuario(novoUsuario);
-      setUser(novoUsuario.email);
+    try {
+      setUser(novoUsuario);
+      await SecureStore.setItemAsync("user", JSON.stringify(novoUsuario));
+    } catch (error) {
+      console.error("Erro ao registrar:", error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, register, usuario }}
+      value={{ user, loading, login, logout, register }}
     >
       {children}
     </AuthContext.Provider>
