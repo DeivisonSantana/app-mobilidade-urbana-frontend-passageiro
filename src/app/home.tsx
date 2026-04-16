@@ -2,8 +2,8 @@
 import FolhaInferior from "@/components/FolhaInferior";
 import Map from "@/components/Map";
 import MenuInferior from "@/components/MenuInferior";
+import ParaOndeVamos from "@/components/ParaOndeVamos";
 import SideMenu from "@/components/SideMenu";
-import SolicitarCorrida from "@/components/SolicitarCorrida";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -18,22 +18,19 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
 } from "react-native";
 import { Region } from "react-native-maps";
 
 export default function Home() {
   const { user, loading: authLoading, usuario } = useAuth();
   const router = useRouter();
-  const colorScheme = useColorScheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState("corrida");
   const [region, setRegion] = useState<Region | null>(null);
-  const [destinationModalVisible, setDestinationModalVisible] = useState(false);
+  const [showParaOndeVamos, setShowParaOndeVamos] = useState(false);
 
   const userInitialRegion = useRef<Region | null>(null);
   const [bottomSheetIndex, setBottomSheetIndex] = useState<number>(0);
-  const [ganhoModalVisivel, setGanhoModalVisivel] = useState(false);
 
   const drawerWidth = Math.round(Dimensions.get("window").width * 0.78);
   const translateX = useRef(new Animated.Value(-drawerWidth)).current;
@@ -129,7 +126,6 @@ export default function Home() {
         onRegionChange={setRegion}
         onUserLocationFound={handleUserLocationFound}
         bottomSheetIndex={bottomSheetIndex}
-        isGanhoModalVisible={ganhoModalVisivel}
       />
 
       {menuVisible && (
@@ -142,13 +138,13 @@ export default function Home() {
       <SideMenu visible={menuVisible} onClose={closeMenu} drawerWidth={280} />
 
       <FolhaInferior
-        onPressInput={() => setDestinationModalVisible(true)}
+        onPressInput={() => setShowParaOndeVamos(true)}
         onSheetChange={handleSheetStateChange}
       />
 
-      <SolicitarCorrida
-        visible={destinationModalVisible}
-        onClose={() => setDestinationModalVisible(false)}
+      <ParaOndeVamos
+        visible={showParaOndeVamos}
+        onClose={() => setShowParaOndeVamos(false)}
       />
 
       <MenuInferior selectedTab={selectedTab} onTabPress={setSelectedTab} />

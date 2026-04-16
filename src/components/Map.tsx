@@ -10,7 +10,6 @@ interface MapProps {
   onRegionChange: (region: Region) => void;
   onUserLocationFound?: (region: Region) => void;
   bottomSheetIndex?: number; // 👈 nova prop
-  isGanhoModalVisible?: boolean;
 }
 
 // Região inicial vazia - será substituída pela localização do usuário
@@ -26,7 +25,6 @@ export default function Map({
   onRegionChange,
   onUserLocationFound,
   bottomSheetIndex, // 👈 recebendo o valor
-  isGanhoModalVisible
 }: MapProps) {
   const mapRef = useRef<MapView>(null);
   const [userLocation, setUserLocation] = useState<Region | null>(null);
@@ -50,7 +48,7 @@ export default function Map({
         if (status === "granted") {
           setLocationPermission(true);
           console.log("Permissão concedida, obtendo localização...");
-          
+
           // Obter localização atual
           let location = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
@@ -82,7 +80,7 @@ export default function Map({
             onUserLocationFound(userInitialRegion.current);
           }
 
-           // Centralizar no usuário
+          // Centralizar no usuário
           if (mapRef.current) {
             mapRef.current.animateToRegion(userRegion, 1000);
           }
@@ -92,7 +90,7 @@ export default function Map({
           Alert.alert(
             "Localização Necessária",
             "Este app precisa da sua localização para funcionar corretamente. Por favor, permita o acesso à localização nas configurações do seu dispositivo.",
-            [{ text: "OK" }]
+            [{ text: "OK" }],
           );
         }
       } catch (error) {
@@ -101,7 +99,7 @@ export default function Map({
         Alert.alert(
           "Erro de Localização",
           "Não foi possível obter sua localização. Verifique se o GPS está ativado.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       } finally {
         setIsLoading(false);
@@ -137,7 +135,7 @@ export default function Map({
     } else if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion(userLocation, 1000);
     } else {
-       // Tentar obter localização novamente
+      // Tentar obter localização novamente
       try {
         setIsLoading(true);
         let location = await Location.getCurrentPositionAsync({
@@ -214,7 +212,7 @@ export default function Map({
     );
   }
 
-   // Se não tem permissão, mostrar erro
+  // Se não tem permissão, mostrar erro
   if (!locationPermission) {
     return (
       <View style={[StyleSheet.absoluteFill, styles.errorContainer]}>
@@ -272,42 +270,22 @@ export default function Map({
         followsUserLocation={false}
         mapType="standard"
       />
-
-      {/* Botão para centralizar no usuário */}
-       {!isGanhoModalVisible && (
-        <TouchableOpacity
-          className="absolute top-32 bottom-32 right-2 rounded-full bg-white w-12 h-12 items-center justify-center z-20"
-          onPress={centerOnUser}
-          disabled={isLoading}
-        >
-          <MaterialIcons
-            name="my-location"
-            size={24}
-            color={isLoading ? "#ccc" : "#007AFF"}
-          />
-        </TouchableOpacity>
-       )}
+      <TouchableOpacity
+        className="absolute top-32 bottom-32 right-2 rounded-full bg-white w-12 h-12 items-center justify-center z-20"
+        onPress={centerOnUser}
+        disabled={isLoading}
+      >
+        <MaterialIcons
+          name="my-location"
+          size={24}
+          color={isLoading ? "#ccc" : "#007AFF"}
+        />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centerButton: {
-    position: "absolute",
-    bottom: 120,
-    right: 16,
-    backgroundColor: "white",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
   loadingContainer: {
     justifyContent: "center",
     alignItems: "center",
