@@ -1,25 +1,22 @@
+import ParaOndeVamos from "@/components/ParaOndeVamos";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetFlatList,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // 🔹 Definição das props que o componente recebe
-interface DriverSearchProps {
-  onPressInput: () => void;
-  // ✨ NOVO: Callback para notificar o componente pai (Home) sobre a mudança de estado
+interface props {
   onSheetChange: (index: number) => void;
 }
 
-export default function FolhaInferiorMotorista({
-  onPressInput,
-  onSheetChange,
-}: DriverSearchProps) {
+export default function FolhaInferior({ onSheetChange }: props) {
   // snap points do bottomsheet
   const snapPoints = useMemo(() => ["64%", "80%"], []);
   const sheetRef = useRef<BottomSheet>(null);
+  const [showParaOndeVamos, setShowParaOndeVamos] = useState(false);
 
   // eventos
   const handleSheetChange = useCallback(
@@ -28,7 +25,7 @@ export default function FolhaInferiorMotorista({
       // ✨ CHAMANDO CALLBACK: Notifica o componente pai sobre o índice atual
       onSheetChange(index);
     },
-    [onSheetChange]
+    [onSheetChange],
   );
 
   // dados das últimas corridas
@@ -45,7 +42,7 @@ export default function FolhaInferiorMotorista({
         cidade: "Curitiba, PR",
       },
     ],
-    []
+    [],
   );
 
   // render item da lista
@@ -72,7 +69,7 @@ export default function FolhaInferiorMotorista({
         </View>
       </TouchableOpacity>
     ),
-    [data]
+    [data],
   );
 
   return (
@@ -97,7 +94,7 @@ export default function FolhaInferiorMotorista({
           <TouchableOpacity
             style={styles.inputContainer}
             activeOpacity={0.7}
-            onPress={onPressInput} // 🔹 Ao clicar, dispara a prop
+            onPress={() => setShowParaOndeVamos(true)}
           >
             <Ionicons
               name="search"
@@ -117,6 +114,10 @@ export default function FolhaInferiorMotorista({
           />
         </BottomSheetView>
       </BottomSheet>
+      <ParaOndeVamos
+        visible={showParaOndeVamos}
+        onClose={() => setShowParaOndeVamos(false)}
+      />
     </View>
   );
 }

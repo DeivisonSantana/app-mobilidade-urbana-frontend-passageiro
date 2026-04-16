@@ -2,7 +2,6 @@
 import FolhaInferior from "@/components/FolhaInferior";
 import Map from "@/components/Map";
 import MenuInferior from "@/components/MenuInferior";
-import ParaOndeVamos from "@/components/ParaOndeVamos";
 import SideMenu from "@/components/SideMenu";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,7 +26,6 @@ export default function Home() {
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [abaSelecionanda, setAbaSelecionada] = useState("corrida");
   const [region, setRegion] = useState<Region | null>(null);
-  const [showParaOndeVamos, setShowParaOndeVamos] = useState(false);
   const userInitialRegion = useRef<Region | null>(null);
   const [bottomSheetIndex, setBottomSheetIndex] = useState<number>(0);
   const drawerWidth = Math.round(Dimensions.get("window").width * 0.78);
@@ -133,11 +131,6 @@ export default function Home() {
       <FolhaInferior
         onPressInput={() => setShowParaOndeVamos(true)}
         onSheetChange={handleSheetStateChange}
-      />
-
-      <ParaOndeVamos
-        visible={showParaOndeVamos}
-        onClose={() => setShowParaOndeVamos(false)}
       />
 
       <MenuInferior
