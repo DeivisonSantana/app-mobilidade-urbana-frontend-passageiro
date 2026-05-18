@@ -10,7 +10,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 export default function Cadastro() {
@@ -42,8 +42,7 @@ export default function Cadastro() {
   const codigoValido = codigo.length === 4;
 
   // validação step 5
-  const step5Valido =
-    cpf.length === 14 && dataNascimento.length === 10;
+  const step5Valido = cpf.length === 14 && dataNascimento.length === 10;
 
   // máscara CPF
   const formatarCPF = (value: string) => {
@@ -72,8 +71,7 @@ export default function Cadastro() {
       const cpfTratado = cpf.replace(/\D/g, "");
 
       // converte 21/11/1992 => 1992-11-21
-      const [dia, mes, ano] =
-        dataNascimento.split("/");
+      const [dia, mes, ano] = dataNascimento.split("/");
 
       const dataNascimentoTratada = `${ano}-${mes}-${dia}`;
 
@@ -95,34 +93,24 @@ export default function Cadastro() {
 
   return (
     <KeyboardAvoidingView
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : "height"
-      }
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}
           >
-            <Ionicons
-              name="chevron-back"
-              size={24}
-              color="black"
-            />
+            <Ionicons name="chevron-back" size={24} color="black" />
           </TouchableOpacity>
 
           <Text style={styles.logoText}>99</Text>
 
           <View style={styles.badgeContainer}>
             <Text style={styles.badgeText}>
-              🤑 Crie sua conta gratuitamente
+              💸 Crie sua conta gratuitamente
             </Text>
           </View>
         </View>
@@ -131,14 +119,11 @@ export default function Cadastro() {
           {/* STEP 1 */}
           {step === 1 && (
             <View>
-              <Text style={styles.title}>
-                Qual é o seu número de telefone ou
-                e-mail?
-              </Text>
+              <Text style={styles.title}>Qual é o seu e-mail?</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
-                  placeholder="Informar telefone ou e-mail"
+                  placeholder="Informe seu e-mail"
                   placeholderTextColor="#CCC"
                   style={styles.input}
                   value={email}
@@ -151,9 +136,7 @@ export default function Cadastro() {
               <TouchableOpacity
                 style={[
                   styles.nextButton,
-                  email
-                    ? styles.nextButtonActive
-                    : styles.nextButtonDisabled,
+                  email ? styles.nextButtonActive : styles.nextButtonDisabled,
                 ]}
                 onPress={() => setStep(2)}
                 disabled={!email}
@@ -161,8 +144,7 @@ export default function Cadastro() {
                 <Text
                   style={[
                     styles.nextButtonText,
-                    !email &&
-                    styles.nextButtonTextDisabled,
+                    !email && styles.nextButtonTextDisabled,
                   ]}
                 >
                   Continuar
@@ -171,13 +153,9 @@ export default function Cadastro() {
 
               <TouchableOpacity
                 style={styles.loginButton}
-                onPress={() =>
-                  router.push("/login")
-                }
+                onPress={() => router.push("/login")}
               >
-                <Text style={styles.loginText}>
-                  Já tem conta? Faça login
-                </Text>
+                <Text style={styles.loginText}>Já tem conta? Faça login</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -186,13 +164,10 @@ export default function Cadastro() {
           {step === 2 && (
             <View>
               <Text style={styles.title}>
-                Digite o código de 4 dígitos enviado
-                para:
+                Digite o código de 4 dígitos enviado para:
               </Text>
 
-              <Text style={styles.highlightText}>
-                {email}
-              </Text>
+              <Text style={styles.highlightText}>{email}</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -200,14 +175,10 @@ export default function Cadastro() {
                   placeholderTextColor="#CCC"
                   keyboardType="numeric"
                   maxLength={4}
-                  style={[
-                    styles.input,
-                    styles.inputCenter,
-                  ]}
+                  style={[styles.input, styles.inputCenter]}
                   value={codigo}
                   onChangeText={(text) => {
-                    const somenteNumeros =
-                      text.replace(/[^0-9]/g, "");
+                    const somenteNumeros = text.replace(/[^0-9]/g, "");
 
                     setCodigo(somenteNumeros);
                   }}
@@ -217,23 +188,16 @@ export default function Cadastro() {
               <View style={styles.inputUnderline} />
 
               <Text style={styles.smallText}>
-                Recomendação: Verifique a caixa de
-                entrada e a pasta de spam
+                Recomendação: Verifique a caixa de entrada e a pasta de spam
               </Text>
 
               <TouchableOpacity
                 style={styles.resendButton}
                 onPress={() => {
-                  console.log(
-                    "Código reenviado!",
-                  );
+                  console.log("Código reenviado!");
                 }}
               >
-                <Text
-                  style={styles.resendButtonText}
-                >
-                  Reenviar código
-                </Text>
+                <Text style={styles.resendButtonText}>Reenviar código</Text>
               </TouchableOpacity>
 
               <View style={styles.rowBetween}>
@@ -241,11 +205,7 @@ export default function Cadastro() {
                   style={styles.roundedButton}
                   onPress={() => setStep(1)}
                 >
-                  <Feather
-                    name="arrow-left"
-                    size={22}
-                    color="black"
-                  />
+                  <Feather name="arrow-left" size={22} color="black" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -261,8 +221,7 @@ export default function Cadastro() {
                   <Text
                     style={[
                       styles.nextButtonText,
-                      !codigoValido &&
-                      styles.nextButtonTextDisabled,
+                      !codigoValido && styles.nextButtonTextDisabled,
                     ]}
                   >
                     Avançar
@@ -271,11 +230,7 @@ export default function Cadastro() {
                   <Feather
                     name="arrow-right"
                     size={18}
-                    color={
-                      codigoValido
-                        ? "black"
-                        : "#CCC"
-                    }
+                    color={codigoValido ? "black" : "#CCC"}
                   />
                 </TouchableOpacity>
               </View>
@@ -285,9 +240,7 @@ export default function Cadastro() {
           {/* STEP 3 */}
           {step === 3 && (
             <View>
-              <Text style={styles.title}>
-                Crie uma senha para sua conta
-              </Text>
+              <Text style={styles.title}>Crie uma senha para sua conta</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -307,11 +260,7 @@ export default function Cadastro() {
                   style={styles.roundedButton}
                   onPress={() => setStep(2)}
                 >
-                  <Feather
-                    name="arrow-left"
-                    size={22}
-                    color="black"
-                  />
+                  <Feather name="arrow-left" size={22} color="black" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -319,16 +268,13 @@ export default function Cadastro() {
                   onPress={() => setStep(4)}
                   style={[
                     styles.nextButtonSmall,
-                    senha
-                      ? styles.nextButtonActive
-                      : styles.nextButtonDisabled,
+                    senha ? styles.nextButtonActive : styles.nextButtonDisabled,
                   ]}
                 >
                   <Text
                     style={[
                       styles.nextButtonText,
-                      !senha &&
-                      styles.nextButtonTextDisabled,
+                      !senha && styles.nextButtonTextDisabled,
                     ]}
                   >
                     Avançar
@@ -337,11 +283,7 @@ export default function Cadastro() {
                   <Feather
                     name="arrow-right"
                     size={18}
-                    color={
-                      senha
-                        ? "black"
-                        : "#CCC"
-                    }
+                    color={senha ? "black" : "#CCC"}
                   />
                 </TouchableOpacity>
               </View>
@@ -351,9 +293,7 @@ export default function Cadastro() {
           {/* STEP 4 */}
           {step === 4 && (
             <View>
-              <Text style={styles.title}>
-                Qual é o seu nome?
-              </Text>
+              <Text style={styles.title}>Qual é o seu nome?</Text>
 
               <Text style={styles.smallTextSpacing}>
                 Informe como você quer que te chamem
@@ -376,11 +316,7 @@ export default function Cadastro() {
                   style={styles.roundedButton}
                   onPress={() => setStep(3)}
                 >
-                  <Feather
-                    name="arrow-left"
-                    size={22}
-                    color="black"
-                  />
+                  <Feather name="arrow-left" size={22} color="black" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -388,16 +324,13 @@ export default function Cadastro() {
                   onPress={() => setStep(5)}
                   style={[
                     styles.nextButtonSmall,
-                    name
-                      ? styles.nextButtonActive
-                      : styles.nextButtonDisabled,
+                    name ? styles.nextButtonActive : styles.nextButtonDisabled,
                   ]}
                 >
                   <Text
                     style={[
                       styles.nextButtonText,
-                      !name &&
-                      styles.nextButtonTextDisabled,
+                      !name && styles.nextButtonTextDisabled,
                     ]}
                   >
                     Avançar
@@ -406,11 +339,7 @@ export default function Cadastro() {
                   <Feather
                     name="arrow-right"
                     size={18}
-                    color={
-                      name
-                        ? "black"
-                        : "#CCC"
-                    }
+                    color={name ? "black" : "#CCC"}
                   />
                 </TouchableOpacity>
               </View>
@@ -420,9 +349,7 @@ export default function Cadastro() {
           {/* STEP 5 */}
           {step === 5 && (
             <View>
-              <Text style={styles.title}>
-                Qual seu CPF?
-              </Text>
+              <Text style={styles.title}>Qual seu CPF?</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -430,9 +357,7 @@ export default function Cadastro() {
                   placeholderTextColor="#CCC"
                   keyboardType="numeric"
                   value={cpf}
-                  onChangeText={(text) =>
-                    setCpf(formatarCPF(text))
-                  }
+                  onChangeText={(text) => setCpf(formatarCPF(text))}
                   maxLength={14}
                   style={styles.input}
                 />
@@ -442,9 +367,7 @@ export default function Cadastro() {
 
               <View style={styles.space} />
 
-              <Text style={styles.title}>
-                Qual sua data de nascimento?
-              </Text>
+              <Text style={styles.title}>Qual sua data de nascimento?</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -453,11 +376,7 @@ export default function Cadastro() {
                   keyboardType="numeric"
                   value={dataNascimento}
                   onChangeText={(text) =>
-                    setDataNascimento(
-                      formatarDataNascimento(
-                        text,
-                      ),
-                    )
+                    setDataNascimento(formatarDataNascimento(text))
                   }
                   maxLength={10}
                   style={styles.input}
@@ -471,11 +390,7 @@ export default function Cadastro() {
                   style={styles.roundedButton}
                   onPress={() => setStep(4)}
                 >
-                  <Feather
-                    name="arrow-left"
-                    size={22}
-                    color="black"
-                  />
+                  <Feather name="arrow-left" size={22} color="black" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -491,8 +406,7 @@ export default function Cadastro() {
                   <Text
                     style={[
                       styles.nextButtonText,
-                      !step5Valido &&
-                      styles.nextButtonTextDisabled,
+                      !step5Valido && styles.nextButtonTextDisabled,
                     ]}
                   >
                     Avançar
@@ -501,11 +415,7 @@ export default function Cadastro() {
                   <Feather
                     name="arrow-right"
                     size={18}
-                    color={
-                      step5Valido
-                        ? "black"
-                        : "#CCC"
-                    }
+                    color={step5Valido ? "black" : "#CCC"}
                   />
                 </TouchableOpacity>
               </View>
@@ -516,59 +426,39 @@ export default function Cadastro() {
           {step === 6 && (
             <View>
               <View style={styles.iconContainer}>
-                <Feather
-                  name="file-text"
-                  size={54}
-                  color="black"
-                />
+                <Feather name="file-text" size={54} color="black" />
               </View>
 
-              <Text style={styles.title}>
-                Aceite os Termos e condições
-              </Text>
+              <Text style={styles.title}>Aceite os Termos e condições</Text>
 
               <Text style={styles.description}>
-                Ao selecionar Concordo abaixo,
-                confirmo que revisei e concordo com
-                os{" "}
-                <Text style={styles.link}>
-                  Termos de uso
-                </Text>{" "}
-                e reconheço o{" "}
-                <Text style={styles.link}>
-                  Aviso de Privacidade
-                </Text>
-                . Eu tenho pelo menos 18 anos.
+                Ao selecionar Concordo abaixo, confirmo que revisei e concordo
+                com os <Text style={styles.link}>Termos de uso</Text> e
+                reconheço o{" "}
+                <Text style={styles.link}>Aviso de Privacidade</Text>. Eu tenho
+                pelo menos 18 anos.
               </Text>
 
               <TouchableOpacity
                 style={styles.termsContainer}
-                onPress={() =>
-                  setConcordo(!concordo)
-                }
+                onPress={() => setConcordo(!concordo)}
                 activeOpacity={0.7}
               >
                 <View
                   style={[
                     styles.radioButton,
-                    concordo &&
-                    styles.radioButtonActive,
+                    concordo && styles.radioButtonActive,
                   ]}
                 >
                   {concordo && (
-                    <Ionicons
-                      name="checkmark"
-                      size={14}
-                      color="white"
-                    />
+                    <Ionicons name="checkmark" size={14} color="white" />
                   )}
                 </View>
 
                 <Text style={styles.termsText}>
                   Li e aceito os{" "}
                   <Text style={styles.linkText}>
-                    Termos de Uso e a Política de
-                    Privacidade
+                    Termos de Uso e a Política de Privacidade
                   </Text>
                 </Text>
               </TouchableOpacity>
@@ -578,11 +468,7 @@ export default function Cadastro() {
                   style={styles.roundedButton}
                   onPress={() => setStep(5)}
                 >
-                  <Feather
-                    name="arrow-left"
-                    size={22}
-                    color="black"
-                  />
+                  <Feather name="arrow-left" size={22} color="black" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -598,8 +484,7 @@ export default function Cadastro() {
                   <Text
                     style={[
                       styles.nextButtonText,
-                      !concordo &&
-                      styles.nextButtonTextDisabled,
+                      !concordo && styles.nextButtonTextDisabled,
                     ]}
                   >
                     Finalizar
@@ -608,11 +493,7 @@ export default function Cadastro() {
                   <Feather
                     name="arrow-right"
                     size={18}
-                    color={
-                      concordo
-                        ? "black"
-                        : "#CCC"
-                    }
+                    color={concordo ? "black" : "#CCC"}
                   />
                 </TouchableOpacity>
               </View>
