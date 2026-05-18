@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import CodigoVerificacao from "../components/CodigoVerificacao";
 import { useAuth } from "../context/AuthProvider";
+import { api } from "../Services/api";
 
 export default function Login() {
   const router = useRouter();
@@ -24,6 +25,10 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showCodigoVerificacao, setShowCodigoVerificacao] = useState(false);
+
+  const [loadingVerificarConta, setLoadingVerificarConta] =
+    useState(false);
+
 
   // Aplica a máscara: 01 23456 7890
   const formatPhone = (text: string) => {
@@ -38,6 +43,142 @@ export default function Login() {
     }
 
     setPhone(formatted);
+  };
+
+  const verificarSeContaExiste = async () => {
+    try {
+      setLoadingVerificarConta(true);
+
+      // remove máscara e espaços
+      const telefone = phone.replace(/\D/g, "");
+
+      console.log(
+        "Verificando se conta existe para:",
+        telefone,
+      );
+
+      const response = await api.get(
+        "/auth/verifica-se-conta-existe",
+        {
+          params: {
+            telefone,
+          },
+        },
+      );
+
+      console.log(
+        "Resposta verificar conta:",
+        response.data,
+      );
+
+      const contaExiste =
+        response.data.contaExiste;
+
+      // se existir conta -> abre modal código
+      if (contaExiste) {
+        setShowCodigoVerificacao(true);
+
+        return;
+      }
+
+      // se não existir -> vai para registro
+      router.push({
+        pathname: "/register",
+        params: {
+          telefone,
+        },
+      });
+    } catch (error: any) {
+      console.log(
+        "===================================",
+      );
+      console.log(
+        "ERRO AO VERIFICAR SE CONTA EXISTE",
+      );
+      console.log(
+        "===================================",
+      );
+
+      // resposta do backend
+      if (error.response) {
+        console.log(
+          "STATUS:",
+          error.response.status,
+        );
+
+        console.log(
+          "DATA:",
+          JSON.stringify(
+            error.response.data,
+            null,
+            2,
+          ),
+        );
+
+        console.log(
+          "HEADERS:",
+          JSON.stringify(
+            error.response.headers,
+            null,
+            2,
+          ),
+        );
+
+        console.log(
+          "URL:",
+          error.config?.baseURL +
+          error.config?.url,
+        );
+
+        console.log(
+          "METHOD:",
+          error.config?.method,
+        );
+
+        console.log(
+          "PARAMS:",
+          JSON.stringify(
+            error.config?.params,
+            null,
+            2,
+          ),
+        );
+      }
+
+      // requisição enviada mas sem resposta
+      else if (error.request) {
+        console.log(
+          "SEM RESPOSTA DO SERVIDOR",
+        );
+
+        console.log(
+          JSON.stringify(
+            error.request,
+            null,
+            2,
+          ),
+        );
+      }
+
+      // erro interno
+      else {
+        console.log(
+          "ERRO:",
+          error.message,
+        );
+      }
+
+      console.log(
+        "STACK:",
+        error.stack,
+      );
+
+      console.log(
+        "===================================",
+      );
+    } finally {
+      setLoadingVerificarConta(false);
+    }
   };
 
   // Habilita se tiver os 11 dígitos numéricos (que resultam em 13 caracteres com espaços)
@@ -134,22 +275,26 @@ export default function Login() {
 
             {/* Botão Próximo */}
             <TouchableOpacity
-              onPress={() => setShowCodigoVerificacao(true)}
+              onPress={() => verificarSeContaExiste()}
               style={[
                 styles.nextButton,
                 isButtonEnabled
                   ? styles.nextButtonActive
                   : styles.nextButtonDisabled,
               ]}
-              disabled={!isButtonEnabled || loading}
+              disabled={
+                !isButtonEnabled ||
+                loadingVerificarConta
+              }
             >
-              {loading ? (
+              {loadingVerificarConta ? (
                 <ActivityIndicator color="white" />
               ) : (
                 <Text
                   style={[
                     styles.nextButtonText,
-                    !isButtonEnabled && styles.nextButtonTextDisabled,
+                    !isButtonEnabled &&
+                    styles.nextButtonTextDisabled,
                   ]}
                 >
                   Próximo
@@ -165,7 +310,9 @@ export default function Login() {
             </View>
 
             {/* Login Social */}
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity style={styles.socialButton}
+              onPress={() => router.push('/loginEmail')}
+            >
               <FontAwesome5
                 name="envelope"
                 size={20}
@@ -173,16 +320,6 @@ export default function Login() {
                 style={styles.socialIcon}
               />
               <Text style={styles.socialButtonText}>Entrar com email</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome5
-                name="google"
-                size={19}
-                color="#1877F2"
-                style={styles.socialIcon}
-              />
-              <Text style={styles.socialButtonText}>Entrar com Google</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
