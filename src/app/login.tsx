@@ -26,9 +26,7 @@ export default function Login() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showCodigoVerificacao, setShowCodigoVerificacao] = useState(false);
 
-  const [loadingVerificarConta, setLoadingVerificarConta] =
-    useState(false);
-
+  const [loadingVerificarConta, setLoadingVerificarConta] = useState(false);
 
   // Aplica a máscara: 01 23456 7890
   const formatPhone = (text: string) => {
@@ -52,27 +50,17 @@ export default function Login() {
       // remove máscara e espaços
       const telefone = phone.replace(/\D/g, "");
 
-      console.log(
-        "Verificando se conta existe para:",
-        telefone,
-      );
+      console.log("Verificando se conta existe para:", telefone);
 
-      const response = await api.get(
-        "/auth/verifica-se-conta-existe",
-        {
-          params: {
-            telefone,
-          },
+      const response = await api.get("/auth/verifica-se-conta-existe", {
+        params: {
+          telefone,
         },
-      );
+      });
 
-      console.log(
-        "Resposta verificar conta:",
-        response.data,
-      );
+      console.log("Resposta verificar conta:", response.data);
 
-      const contaExiste =
-        response.data.contaExiste;
+      const contaExiste = response.data.contaExiste;
 
       // se existir conta -> abre modal código
       if (contaExiste) {
@@ -89,93 +77,43 @@ export default function Login() {
         },
       });
     } catch (error: any) {
-      console.log(
-        "===================================",
-      );
-      console.log(
-        "ERRO AO VERIFICAR SE CONTA EXISTE",
-      );
-      console.log(
-        "===================================",
-      );
+      console.log("===================================");
+      console.log("ERRO AO VERIFICAR SE CONTA EXISTE");
+      console.log("===================================");
 
       // resposta do backend
       if (error.response) {
-        console.log(
-          "STATUS:",
-          error.response.status,
-        );
+        console.log("STATUS:", error.response.status);
 
-        console.log(
-          "DATA:",
-          JSON.stringify(
-            error.response.data,
-            null,
-            2,
-          ),
-        );
+        console.log("DATA:", JSON.stringify(error.response.data, null, 2));
 
         console.log(
           "HEADERS:",
-          JSON.stringify(
-            error.response.headers,
-            null,
-            2,
-          ),
+          JSON.stringify(error.response.headers, null, 2),
         );
 
-        console.log(
-          "URL:",
-          error.config?.baseURL +
-          error.config?.url,
-        );
+        console.log("URL:", error.config?.baseURL + error.config?.url);
 
-        console.log(
-          "METHOD:",
-          error.config?.method,
-        );
+        console.log("METHOD:", error.config?.method);
 
-        console.log(
-          "PARAMS:",
-          JSON.stringify(
-            error.config?.params,
-            null,
-            2,
-          ),
-        );
+        console.log("PARAMS:", JSON.stringify(error.config?.params, null, 2));
       }
 
       // requisição enviada mas sem resposta
       else if (error.request) {
-        console.log(
-          "SEM RESPOSTA DO SERVIDOR",
-        );
+        console.log("SEM RESPOSTA DO SERVIDOR");
 
-        console.log(
-          JSON.stringify(
-            error.request,
-            null,
-            2,
-          ),
-        );
+        console.log(JSON.stringify(error.request, null, 2));
       }
 
       // erro interno
       else {
-        console.log(
-          "ERRO:",
-          error.message,
-        );
+        console.log("ERRO:", error.message);
       }
 
-      console.log(
-        "STACK:",
-        error.stack,
-      );
+      console.log("STACK:", error.stack);
 
-      console.log(
-        "===================================",
-      );
+      console.log("===================================");
     } finally {
       setLoadingVerificarConta(false);
     }
@@ -282,10 +220,7 @@ export default function Login() {
                   ? styles.nextButtonActive
                   : styles.nextButtonDisabled,
               ]}
-              disabled={
-                !isButtonEnabled ||
-                loadingVerificarConta
-              }
+              disabled={!isButtonEnabled || loadingVerificarConta}
             >
               {loadingVerificarConta ? (
                 <ActivityIndicator color="white" />
@@ -293,8 +228,7 @@ export default function Login() {
                 <Text
                   style={[
                     styles.nextButtonText,
-                    !isButtonEnabled &&
-                    styles.nextButtonTextDisabled,
+                    !isButtonEnabled && styles.nextButtonTextDisabled,
                   ]}
                 >
                   Próximo
@@ -310,8 +244,9 @@ export default function Login() {
             </View>
 
             {/* Login Social */}
-            <TouchableOpacity style={styles.socialButton}
-              onPress={() => router.push('/loginEmail')}
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={() => router.push("/loginEmail")}
             >
               <FontAwesome5
                 name="envelope"
