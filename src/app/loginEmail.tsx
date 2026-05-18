@@ -1,11 +1,12 @@
 import { useAuth } from "@/context/AuthProvider";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -56,159 +57,176 @@ export default function LoginEmail() {
 
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboard}
         >
-          <View style={styles.content}>
-            {/* STEP 1 */}
-            {step === 1 && (
-              <View style={styles.stepContainer}>
-                <View>
-                  <Text style={styles.title}>
-                    Qual é o seu endereço de e-mail?
-                  </Text>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* HEADER */}
+            <View style={styles.header}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Ionicons name="chevron-back" size={24} color="black" />
+              </TouchableOpacity>
 
-                  <Text style={styles.label}>E-mail</Text>
+              <Text style={styles.logoText}>99</Text>
 
-                  <TextInput
-                    placeholder="nome@exemplo.com"
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!loading}
-                  />
-                </View>
-
-                <View style={styles.footerButtons}>
-                  <TouchableOpacity
-                    style={styles.roundedButtonGray}
-                    onPress={() => router.back()}
-                  >
-                    <Feather
-                      name="arrow-left"
-                      size={24}
-                      color="black"
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    disabled={!email.trim()}
-                    style={[
-                      styles.nextButton,
-                      {
-                        backgroundColor: email.trim()
-                          ? "#000000"
-                          : "#d1d5db",
-                      },
-                    ]}
-                    onPress={() => setStep(2)}
-                  >
-                    <Text style={styles.nextButtonText}>
-                      Avançar
-                    </Text>
-
-                    <Feather
-                      name="arrow-right"
-                      size={20}
-                      color="white"
-                    />
-                  </TouchableOpacity>
-                </View>
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>
+                  🔐 Acesse sua conta com segurança
+                </Text>
               </View>
-            )}
+            </View>
 
-            {/* STEP 2 */}
-            {step === 2 && (
-              <View style={styles.stepContainer}>
-                <View>
-                  <Text style={styles.title}>
-                    Informe sua senha
-                  </Text>
-
-                  <Text style={styles.emailText}>{email}</Text>
-
-                  <Text style={styles.label}>Senha</Text>
-
-                  <TextInput
-                    placeholder="Digite sua senha"
-                    secureTextEntry
-                    style={[
-                      styles.input,
-                      erroLogin
-                        ? styles.inputError
-                        : undefined,
-                    ]}
-                    value={senha}
-                    onChangeText={(text) => {
-                      setSenha(text);
-
-                      if (erroLogin) {
-                        setErroLogin("");
-                      }
-                    }}
-                    autoCapitalize="none"
-                    editable={!loading}
-                  />
-
-                  {!!erroLogin && (
-                    <Text style={styles.errorText}>
-                      {erroLogin}
+            <View style={styles.content}>
+              {/* STEP 1 */}
+              {step === 1 && (
+                <View style={styles.stepContainer}>
+                  <View>
+                    <Text style={styles.title}>
+                      Qual é o seu endereço de e-mail?
                     </Text>
-                  )}
-                </View>
 
-                <View style={styles.footerButtons}>
-                  <TouchableOpacity
-                    style={styles.roundedButtonGray}
-                    onPress={() => setStep(1)}
-                    disabled={loading}
-                  >
-                    <Feather
-                      name="arrow-left"
-                      size={24}
-                      color="black"
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    disabled={!senha || loading}
-                    onPress={handleLogin}
-                    style={[
-                      styles.nextButton,
-                      {
-                        backgroundColor:
-                          senha && !loading
-                            ? "#000000"
-                            : "#d1d5db",
-                      },
-                    ]}
-                  >
-                    {loading ? (
-                      <ActivityIndicator
-                        size="small"
-                        color="white"
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        placeholder="nome@exemplo.com"
+                        placeholderTextColor="#CCC"
+                        style={styles.input}
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        editable={!loading}
                       />
-                    ) : (
-                      <>
-                        <Text style={styles.nextButtonText}>
-                          Entrar
-                        </Text>
+                    </View>
 
-                        <Feather
-                          name="arrow-right"
-                          size={20}
-                          color="white"
-                        />
-                      </>
-                    )}
-                  </TouchableOpacity>
+                    <View style={styles.inputUnderline} />
+                  </View>
+
+                  <View style={styles.footerButtons}>
+                    <TouchableOpacity
+                      style={styles.roundedButton}
+                      onPress={() => router.back()}
+                    >
+                      <Feather name="arrow-left" size={22} color="black" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      disabled={!email.trim()}
+                      style={[
+                        styles.nextButton,
+                        email.trim()
+                          ? styles.nextButtonActive
+                          : styles.nextButtonDisabled,
+                      ]}
+                      onPress={() => setStep(2)}
+                    >
+                      <Text
+                        style={[
+                          styles.nextButtonText,
+                          !email.trim() && styles.nextButtonTextDisabled,
+                        ]}
+                      >
+                        Avançar
+                      </Text>
+
+                      <Feather
+                        name="arrow-right"
+                        size={18}
+                        color={email.trim() ? "black" : "#CCC"}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            )}
-          </View>
+              )}
+
+              {/* STEP 2 */}
+              {step === 2 && (
+                <View style={styles.stepContainer}>
+                  <View>
+                    <Text style={styles.title}>Informe sua senha</Text>
+
+                    <Text style={styles.highlightText}>{email}</Text>
+
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        placeholder="Digite sua senha"
+                        placeholderTextColor="#CCC"
+                        secureTextEntry
+                        style={styles.input}
+                        value={senha}
+                        onChangeText={(text) => {
+                          setSenha(text);
+
+                          if (erroLogin) {
+                            setErroLogin("");
+                          }
+                        }}
+                        autoCapitalize="none"
+                        editable={!loading}
+                      />
+                    </View>
+
+                    <View
+                      style={[
+                        styles.inputUnderline,
+                        erroLogin && styles.inputUnderlineError,
+                      ]}
+                    />
+
+                    {!!erroLogin && (
+                      <Text style={styles.errorText}>{erroLogin}</Text>
+                    )}
+                  </View>
+
+                  <View style={styles.footerButtons}>
+                    <TouchableOpacity
+                      style={styles.roundedButton}
+                      onPress={() => setStep(1)}
+                      disabled={loading}
+                    >
+                      <Feather name="arrow-left" size={22} color="black" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      disabled={!senha || loading}
+                      onPress={handleLogin}
+                      style={[
+                        styles.nextButton,
+                        senha && !loading
+                          ? styles.nextButtonActive
+                          : styles.nextButtonDisabled,
+                      ]}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="black" />
+                      ) : (
+                        <>
+                          <Text
+                            style={[
+                              styles.nextButtonText,
+                              (!senha || loading) &&
+                                styles.nextButtonTextDisabled,
+                            ]}
+                          >
+                            Entrar
+                          </Text>
+
+                          <Feather
+                            name="arrow-right"
+                            size={18}
+                            color={senha && !loading ? "black" : "#CCC"}
+                          />
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </>
@@ -218,18 +236,54 @@ export default function LoginEmail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#FFF",
   },
 
   keyboard: {
     flex: 1,
   },
 
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  header: {
+    alignItems: "center",
+    paddingTop: 20,
+    paddingHorizontal: 20,
+  },
+
+  backButton: {
+    position: "absolute",
+    left: 20,
+    top: 20,
+  },
+
+  logoText: {
+    fontSize: 48,
+    fontWeight: "900",
+    color: "#000",
+  },
+
+  badgeContainer: {
+    backgroundColor: "#E8F5E9",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+
+  badgeText: {
+    color: "#2E7D32",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 32,
+    paddingHorizontal: 30,
+    marginTop: 40,
+    paddingBottom: 30,
   },
 
   stepContainer: {
@@ -238,73 +292,91 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 34,
+    fontSize: 22,
     fontWeight: "700",
-    color: "#111111",
-    marginBottom: 32,
+    color: "#000",
+    marginBottom: 24,
   },
 
-  label: {
+  highlightText: {
     fontSize: 16,
-    color: "#444444",
-    marginBottom: 8,
+    fontWeight: "600",
+    marginBottom: 24,
+    color: "#FF5500",
   },
 
-  emailText: {
-    fontSize: 16,
-    color: "#6b7280",
-    marginBottom: 32,
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
   },
 
   input: {
-    borderWidth: 1.5,
-    borderColor: "#111111",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 18,
-    backgroundColor: "#ffffff",
+    flex: 1,
+    fontSize: 22,
+    color: "#000",
+    fontWeight: "400",
   },
 
-  inputError: {
-    borderColor: "#ef4444",
+  inputUnderline: {
+    height: 1,
+    backgroundColor: "#FF5500",
+    width: "100%",
+    marginBottom: 12,
+  },
+
+  inputUnderlineError: {
+    backgroundColor: "#ef4444",
+  },
+
+  errorText: {
+    color: "#ef4444",
+    fontSize: 13,
+    marginTop: 8,
+    lineHeight: 18,
   },
 
   footerButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 40,
   },
 
-  roundedButtonGray: {
-    width: 48,
-    height: 48,
-    borderRadius: 9999,
-    backgroundColor: "#e5e5e5",
+  roundedButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#F5F5F5",
     justifyContent: "center",
     alignItems: "center",
   },
 
   nextButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    height: 50,
+    borderRadius: 999,
     justifyContent: "center",
-    backgroundColor: "#000000",
+    alignItems: "center",
+    flexDirection: "row",
     paddingHorizontal: 24,
-    height: 48,
-    borderRadius: 9999,
+  },
+
+  nextButtonDisabled: {
+    backgroundColor: "#F5F5F5",
+  },
+
+  nextButtonActive: {
+    backgroundColor: "#FFD200",
   },
 
   nextButtonText: {
-    color: "#ffffff",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: "#000",
     marginRight: 8,
   },
 
-  errorText: {
-    color: "#ef4444",
-    fontSize: 14,
-    marginTop: 8,
+  nextButtonTextDisabled: {
+    color: "#CCC",
   },
 });
