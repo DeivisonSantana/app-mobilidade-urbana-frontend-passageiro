@@ -27,30 +27,27 @@ interface props {
 // Lista base estática padrão
 const enderecosEstaticos = [
   {
-    endereco_formatado:
+    name: "Rua Portuguesa, 6244",
+    formattedAddress:
       "Rua Portuguesa, 6244 - Conjunto Jamari, Porto Velho - RO, 76812-612, Brasil",
     latitude: -8.7601,
     longitude: -63.9002,
-    titulo: "Rua Portuguesa, 6244",
-    subtitulo: "Conjunto Jamari, Porto Velho - RO, 76812-612, Brasil",
     distancia: "5.4km",
   },
   {
-    endereco_formatado:
+    name: "Rua Jobu Miró, 3287",
+    formattedAddress:
       "Rua Jobu Miró, 3287 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-608, Brasil",
     latitude: -8.7523,
     longitude: -63.8891,
-    titulo: "Rua Jobu Miró, 3287",
-    subtitulo: "Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-608, Brasil",
     distancia: "3.2km",
   },
   {
-    endereco_formatado:
+    name: "Rua Brasília, 2930",
+    formattedAddress:
       "Rua Brasília, 2930 - São Cristóvão, Porto Velho - RO, 76804-070, Brasil",
     latitude: -8.7488,
     longitude: -63.8734,
-    titulo: "Rua Brasília, 2930",
-    subtitulo: "São Cristóvão, Porto Velho - RO, 76804-070, Brasil",
     distancia: "7km",
   },
 ];
@@ -62,18 +59,18 @@ export default function ParaOndevamos({
 }: props) {
   const translateX = useRef(new Animated.Value(width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  
+
   // Opacidade para o efeito de pulsação das barras cinzas do esqueleto de carregamento
   const skeletonOpacity = useRef(new Animated.Value(0.4)).current;
 
   const destinoInputRef = useRef<TextInput>(null);
 
   const [isMounted, setIsMounted] = useState(visible);
-  
+
   const [partidaTexto, setPartidaTexto] = useState("");
   const [destinoTexto, setDestinoTexto] = useState("");
   const [listaEnderecos, setListaEnderecos] = useState(enderecosEstaticos);
-  
+
   // 🔹 Estado de carregamento
   const [loading, setLoading] = useState(false);
 
@@ -94,7 +91,7 @@ export default function ParaOndevamos({
             duration: 600,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       animationLoop.start();
     } else {
@@ -132,7 +129,6 @@ export default function ParaOndevamos({
       return;
     }
 
-    // 🔹 Inicia o estado de carregamento
     setLoading(true);
 
     try {
@@ -140,21 +136,16 @@ export default function ParaOndevamos({
         params: { endereco: texto },
       });
 
-      console.log(response.data, 'response');
+      console.log(response.data, "response");
 
       if (response.data) {
-        const { formattedAddress, latitude, longitude } = response.data;
-
-        const partes = formattedAddress.split(" - ");
-        const tituloDigitado = partes[0] || formattedAddress;
-        const subtituloDigitado = partes[1] || "";
+        const { name, formattedAddress, latitude, longitude } = response.data;
 
         const novoEnderecoObjeto = {
-          endereco_formatado: formattedAddress,
-          latitude: latitude,
-          longitude: longitude,
-          titulo: tituloDigitado,
-          subtitulo: subtituloDigitado,
+          name,
+          formattedAddress,
+          latitude,
+          longitude,
           distancia: "--",
         };
 
@@ -163,11 +154,9 @@ export default function ParaOndevamos({
     } catch (error) {
       console.log("Erro ao buscar endereço no backend:", error);
     } finally {
-      // 🔹 Para o estado de carregamento
       setLoading(false);
     }
   };
-
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (visible) {
@@ -178,12 +167,14 @@ export default function ParaOndevamos({
     return () => clearTimeout(delayDebounceFn);
   }, [destinoTexto]);
 
-  const handleSelecionarEndereco = (item: typeof enderecosEstaticos[0]) => {
-    setDestinoTexto(item.endereco_formatado);
-    
+  const handleSelecionarEndereco = (item: (typeof enderecosEstaticos)[0]) => {
+    // agora o input recebe o NAME
+    setDestinoTexto(item.name);
+
     console.log("📍 Endereço Selecionado com Sucesso!");
     console.log("📦 Dados do Destino:", {
-      endereco: item.endereco_formatado,
+      name: item.name,
+      formattedAddress: item.formattedAddress,
       lat: item.latitude,
       lng: item.longitude,
     });
@@ -200,7 +191,7 @@ export default function ParaOndevamos({
 
     const subscription = BackHandler.addEventListener(
       "hardwareBackPress",
-      onBackPress
+      onBackPress,
     );
 
     return () => subscription.remove();
@@ -365,38 +356,61 @@ export default function ParaOndevamos({
 
         {/* LISTA / SKELETON LOAD */}
         <View style={styles.list}>
-          {loading ? (
-            // 🔹 Renderização do efeito Skeleton idêntico ao vídeo em anexo enquanto carrega
-            Array.from({ length: 4 }).map((_, i) => (
-              <Animated.View key={i} style={[styles.listItem, { opacity: skeletonOpacity }]}>
-                <View style={[styles.listIconContainer, { backgroundColor: "#EBEBEB" }]} />
-                <View style={styles.listContent}>
-                  <View style={{ width: "60%", height: 14, backgroundColor: "#EBEBEB", borderRadius: 4, marginBottom: 8 }} />
-                  <View style={{ width: "90%", height: 10, backgroundColor: "#EBEBEB", borderRadius: 4 }} />
-                </View>
-              </Animated.View>
-            ))
-          ) : (
-            // Exibição normal da lista quando o loading é encerrado
-            listaEnderecos.map((endereco, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={styles.listItem}
-                onPress={() => handleSelecionarEndereco(endereco)}
-              >
-                <View style={styles.listIconContainer}>
-                  <Ionicons name="time" size={14} color="#111" />
-                </View>
+          {loading
+            ? // 🔹 Renderização do efeito Skeleton idêntico ao vídeo em anexo enquanto carrega
+              Array.from({ length: 4 }).map((_, i) => (
+                <Animated.View
+                  key={i}
+                  style={[styles.listItem, { opacity: skeletonOpacity }]}
+                >
+                  <View
+                    style={[
+                      styles.listIconContainer,
+                      { backgroundColor: "#EBEBEB" },
+                    ]}
+                  />
+                  <View style={styles.listContent}>
+                    <View
+                      style={{
+                        width: "60%",
+                        height: 14,
+                        backgroundColor: "#EBEBEB",
+                        borderRadius: 4,
+                        marginBottom: 8,
+                      }}
+                    />
+                    <View
+                      style={{
+                        width: "90%",
+                        height: 10,
+                        backgroundColor: "#EBEBEB",
+                        borderRadius: 4,
+                      }}
+                    />
+                  </View>
+                </Animated.View>
+              ))
+            : // Exibição normal da lista quando o loading é encerrado
+              listaEnderecos.map((endereco, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.listItem}
+                  onPress={() => handleSelecionarEndereco(endereco)}
+                >
+                  <View style={styles.listIconContainer}>
+                    <Ionicons name="time" size={14} color="#111" />
+                  </View>
 
-                <View style={styles.listContent}>
-                  <Text style={styles.listText}>{endereco.titulo}</Text>
-                  <Text style={styles.listSubText}>{endereco.subtitulo}</Text>
-                </View>
+                  <View style={styles.listContent}>
+                    <Text style={styles.listText}>{endereco.name}</Text>
+                    <Text style={styles.listSubText}>
+                      {endereco.formattedAddress}
+                    </Text>
+                  </View>
 
-                <Text style={styles.distanceText}>{endereco.distancia}</Text>
-              </TouchableOpacity>
-            ))
-          )}
+                  <Text style={styles.distanceText}>{endereco.distancia}</Text>
+                </TouchableOpacity>
+              ))}
         </View>
       </Animated.View>
     </View>
