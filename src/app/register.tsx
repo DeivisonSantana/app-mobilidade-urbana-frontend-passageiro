@@ -108,9 +108,9 @@ export default function Cadastro() {
 
           <Text style={styles.logoText}>99</Text>
 
-          <View style={styles.badgeContainer}>
+          <View style={[styles.badgeContainer, { marginTop: 20 }]}>
             <Text style={styles.badgeText}>
-              💸 Crie sua conta gratuitamente
+              Crie sua conta gratuitamente
             </Text>
           </View>
         </View>
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: "#2E7D32",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "600",
   },
 
