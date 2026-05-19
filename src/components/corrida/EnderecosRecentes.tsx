@@ -1,7 +1,13 @@
 // components/EnderecosRecentes.tsx
 
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import {
   Animated,
   StyleSheet,
@@ -9,22 +15,118 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Importamos a interface do pai para garantir sincronia total de tipos
-import { EnderecoItem } from "./ParaOndeVamos";
+
+interface EnderecoItem {
+  name: string;
+  formattedAddress: string;
+  latitude: number;
+  longitude: number;
+  distancia: string | number;
+}
 
 interface EnderecosRecentesProps {
   loading: boolean;
   skeletonOpacity: Animated.Value;
-  listaEnderecos: Omit<EnderecoItem, "order">[] | EnderecoItem[];
-  onSelecionarEndereco: (item: any) => void;
+  listaEnderecos: EnderecoItem[]; // Resultados vindos da busca da API no Pai
+  onSelecionarEndereco: (item: EnderecoItem) => void;
 }
 
-export default function EnderecosRecentes({
-  loading,
-  skeletonOpacity,
-  listaEnderecos,
-  onSelecionarEndereco,
-}: EnderecosRecentesProps) {
+// Criamos uma interface para expor a função de salvar para o componente Pai
+export interface EnderecosRecentesRef {
+  salvarEnderecoNoCache: (novoEndereco: EnderecoItem) => Promise<void>;
+}
+
+const CACHE_HISTORICO_KEY = "@historico_enderecos";
+
+// Lista base estática padrão caso o cache esteja vazio
+const enderecosPadrao: EnderecoItem[] = [
+  {
+    name: "Rua Portuguesa, 6244",
+    formattedAddress:
+      "Rua Portuguesa, 6244 - Conjunto Jamari, Porto Velho - RO, 76812-612, Brasil",
+    latitude: -8.7601,
+    longitude: -63.9002,
+    distancia: "5.4km",
+  },
+  {
+    name: "Rua Jobu Miró, 3287",
+    formattedAddress:
+      "Rua Jobu Miró, 3287 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-608, Brasil",
+    latitude: -8.7523,
+    longitude: -63.8891,
+    distancia: "3.2km",
+  },
+  {
+    name: "Rua Brasília, 2930",
+    formattedAddress:
+      "Rua Brasília, 2930 - São Cristóvão, Porto Velho - RO, 76804-070, Brasil",
+    latitude: -8.7488,
+    longitude: -63.8734,
+    distancia: "7km",
+  },
+];
+
+const EnderecosRecentes = forwardRef<
+  EnderecosRecentesRef,
+  EnderecosRecentesProps
+>(({ loading, skeletonOpacity, listaEnderecos, onSelecionarEndereco }, ref) => {
+  const [historicoCache, setHistoricoCache] = useState<EnderecoItem[]>([]);
+
+  // Carrega o histórico do cache ao montar o componente
+  const carregarHistoricoCache = async () => {
+    try {
+      const cachedData = await AsyncStorage.getItem(CACHE_HISTORICO_KEY);
+      if (cachedData) {
+        setHistoricoCache(JSON.parse(cachedData));
+      } else {
+        // Se não houver cache, inicializa com a lista padrão e salva
+        setHistoricoCache(enderecosPadrao);
+        await AsyncStorage.setItem(
+          CACHE_HISTORICO_KEY,
+          JSON.stringify(enderecosPadrao),
+        );
+      }
+    } catch (error) {
+      console.log("Erro ao carregar histórico do cache:", error);
+      setHistoricoCache(enderecosPadrao);
+    }
+  };
+
+  useEffect(() => {
+    carregarHistoricoCache();
+  }, []);
+
+  // Expõe a função de salvar para ser chamada pelo componente Pai no handleSelecionarEndereco
+  useImperativeHandle(ref, () => ({
+    salvarEnderecoNoCache: async (novoEndereco: EnderecoItem) => {
+      try {
+        // Filtra para remover duplicados do mesmo endereço formatado (se houver)
+        const historicoFiltrado = historicoCache.filter(
+          (item) => item.formattedAddress !== novoEndereco.formattedAddress,
+        );
+
+        // Coloca o novo endereço no topo da lista histórica
+        const novoHistorico = [novoEndereco, ...historicoFiltrado];
+
+        // Limita o histórico a 10 itens para não sobrecarregar o cache
+        const historicoLimitado = novoHistorico.slice(0, 10);
+
+        setHistoricoCache(historicoLimitado);
+        await AsyncStorage.setItem(
+          CACHE_HISTORICO_KEY,
+          JSON.stringify(historicoLimitado),
+        );
+      } catch (error) {
+        console.log("Erro ao salvar endereço no cache:", error);
+      }
+    },
+  }));
+
+  // Define a lista final combinando o que veio da busca (API) + o histórico salvo em cache
+  // Se houver texto digitado (listaEnderecos populada pelo pai), ela ganha prioridade visual
+  const listaExibicao =
+    listaEnderecos.length > 0 ? listaEnderecos : historicoCache;
+
   return (
     <View style={styles.container}>
       {/* AÇÕES RÁPIDAS */}
@@ -105,7 +207,7 @@ export default function EnderecosRecentes({
                 </View>
               </Animated.View>
             ))
-          : listaEnderecos.map((endereco, index) => (
+          : listaExibicao.map((endereco, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.listItem}
@@ -129,27 +231,26 @@ export default function EnderecosRecentes({
       </View>
     </View>
   );
-}
+});
+
+export default EnderecosRecentes;
 
 const styles = StyleSheet.create({
   container: {
     width: "100%",
   },
-
   quickActions: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 18,
   },
-
   quickButton: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
     marginHorizontal: 4,
   },
-
   quickText: {
     flex: 1,
     fontSize: 14,
@@ -158,24 +259,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginRight: 4,
   },
-
   divider: {
     height: 1,
     backgroundColor: "#F1F1F1",
     marginHorizontal: -24,
     marginBottom: 8,
   },
-
   list: {
     marginTop: 4,
   },
-
   listItem: {
     flexDirection: "row",
     alignItems: "flex-start",
     paddingVertical: 14,
   },
-
   listIconContainer: {
     width: 28,
     height: 28,
@@ -186,26 +283,22 @@ const styles = StyleSheet.create({
     marginRight: 14,
     marginTop: 2,
   },
-
   listContent: {
     flex: 1,
     paddingRight: 10,
   },
-
   listText: {
     fontSize: 16,
     color: "#2B2B2B",
     fontWeight: "700",
     marginBottom: 3,
   },
-
   listSubText: {
     fontSize: 13,
     lineHeight: 18,
     color: "#909090",
     fontWeight: "400",
   },
-
   distanceText: {
     fontSize: 14,
     color: "#9B9B9B",
