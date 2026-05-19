@@ -9,7 +9,8 @@ import MapView, { Region, UserLocationChangeEvent } from "react-native-maps";
 interface MapProps {
   region: Region | null;
   onRegionChange: (region: Region) => void;
-  onUserLocationFound?: (region: Region) => void;
+  // 🔹 Atualizado: Agora aceita receber também o nome formatado do endereço por parâmetro opcional
+  onUserLocationFound?: (region: Region, addressName?: string) => void;
   bottomSheetIndex?: number;
 }
 
@@ -41,6 +42,32 @@ export default function Map({
   const [mapAdjusted, setMapAdjusted] = useState(false);
   const locationWatchSubscription = useRef<Location.LocationSubscription | null>(null);
 
+  // 🗺️ Executa em paralelo de fundo e evita lentidão na UI/Processamento principal do mapa
+  const fetchAddressInBackground = async (lat: number, lon: number, currentRegion: Region) => {
+    try {
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: lat,
+        longitude: lon,
+      });
+
+      if (reverseGeocode && reverseGeocode.length > 0) {
+        const address = reverseGeocode[0];
+        const rua = address.street || "";
+        const numero = address.streetNumber ? `, ${address.streetNumber}` : "";
+        const formattedAddress = rua ? `${rua}${numero}` : (address.district || "Minha Localização");
+
+        console.log("⚡ Endereço resolvido em background:", formattedAddress);
+        
+        // Dispara o callback atualizando apenas o texto sem interferir na física do mapa
+        if (onUserLocationFound) {
+          onUserLocationFound(currentRegion, formattedAddress);
+        }
+      }
+    } catch (error) {
+      console.log("Erro na geocodificação reversa em background:", error);
+    }
+  };
+
   // Carregar localização do cache
   const loadCachedLocation = useCallback(async () => {
     try {
@@ -61,8 +88,11 @@ export default function Map({
         setHasInitialLocation(true);
         
         if (onUserLocationFound) {
-          onUserLocationFound(location);
+          onUserLocationFound(location, "Localização Atual");
         }
+
+        // Tenta obter o texto do endereço associado ao cache de fundo
+        fetchAddressInBackground(location.latitude, location.longitude, location);
         return true;
       }
     } catch (error) {
@@ -133,7 +163,7 @@ export default function Map({
                 AsyncStorage.setItem(CACHE_KEY, JSON.stringify(originalRegion));
                 
                 if (onUserLocationFound) {
-                  onUserLocationFound(originalRegion);
+                  onUserLocationFound(originalRegion, "Localização Atual");
                 }
 
                 // Centraliza no usuário quando o mapa estiver pronto
@@ -144,6 +174,9 @@ export default function Map({
                 if (isMounted) {
                   setIsLoading(false);
                 }
+
+                // Dispara o geocodificador em paralelo sem bloquear a UI principal
+                fetchAddressInBackground(originalRegion.latitude, originalRegion.longitude, originalRegion);
               }
             }
           );
@@ -205,7 +238,7 @@ export default function Map({
     } else if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion(userLocation, 1000);
     } else {
-      // Tentar obter localização novamente
+      // Tentar obter localização novamente se falhar tudo
       try {
         setIsLoading(true);
         let location = await Location.getCurrentPositionAsync({
@@ -234,8 +267,10 @@ export default function Map({
           mapRef.current.animateToRegion(newUserRegion, 1000);
         }
         
-        // Salva no cache
         await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(originalRegion));
+        
+        // Dispara de fundo
+        fetchAddressInBackground(originalRegion.latitude, originalRegion.longitude, originalRegion);
       } catch (error) {
         console.error("Erro ao obter localização:", error);
         Alert.alert("Erro", "Não foi possível obter sua localização");
@@ -248,8 +283,6 @@ export default function Map({
   // BottomSheet adjustment effect
   useEffect(() => {
     if (bottomSheetIndex === undefined || !userInitialRegion.current) return;
-
-    console.log("🗺️ BottomSheet mudou para índice:", bottomSheetIndex);
 
     if (bottomSheetIndex === 1) {
       const largerOffset = 0.045;
@@ -285,33 +318,16 @@ export default function Map({
   // Se não tem permissão, mostrar erro
   if (locationPermission === false) {
     return (
-      <View style={[StyleSheet.absoluteFill, styles.errorContainer]}>
+      <View style={styles.errorContainer}>
         <MaterialIcons name="location-off" size={48} color="#FF3B30" />
-        <Text style={styles.errorText}>
-          Permissão de localização necessária
-        </Text>
+        <Text style={styles.errorText}>Permissão de localização necessária</Text>
         <Text style={styles.errorSubtext}>
-          Ative a localização nas configurações do seu dispositivo para usar o
-          app
+          Ative a localização nas configurações do seu dispositivo para usar o app
         </Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => {
-            setIsLoading(true);
-            setLocationPermission(null);
-            // Recarregar a lógica
-            setTimeout(() => {
-              window.location.reload();
-            }, 100);
-          }}
-        >
-          <Text style={styles.retryButtonText}>Tentar Novamente</Text>
-        </TouchableOpacity>
       </View>
     );
   }
 
-  // Mapa sempre renderizado
   return (
     <View style={StyleSheet.absoluteFill}>
       <MapView
@@ -327,7 +343,6 @@ export default function Map({
         onMapReady={() => setIsMapReady(true)}
       />
       
-      {/* Loading overlay - aparece apenas se necessário */}
       {isLoading && !userLocation && (
         <View style={styles.loadingOverlay}>
           <MaterialIcons name="location-searching" size={32} color="#007AFF" />
@@ -351,25 +366,8 @@ export default function Map({
 }
 
 const styles = StyleSheet.create({
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    zIndex: 10,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-  },
   errorContainer: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f8f8f8",
@@ -379,42 +377,52 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 18,
     color: "#FF3B30",
-    textAlign: "center",
     fontWeight: "bold",
+    textAlign: "center",
   },
   errorSubtext: {
     marginTop: 8,
     fontSize: 14,
     color: "#666",
     textAlign: "center",
-    marginBottom: 20,
   },
-  retryButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 20,
+  loadingOverlay: {
+    position: "absolute",
+    top: 40,
+    alignSelf: "center",
+    backgroundColor: "white",
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  retryButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
   },
   locationButton: {
-    position: 'absolute',
-    top: 128, // top-32 em pontos
-    right: 8, // right-2 em pontos
-    borderRadius: 999,
-    backgroundColor: 'white',
+    position: "absolute",
+    bottom: 32,
+    right: 16,
+    backgroundColor: "white",
     width: 48,
     height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-    shadowColor: '#000',
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    zIndex: 20,
   },
 });
