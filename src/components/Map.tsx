@@ -50,29 +50,39 @@ export default function Map({
         longitude: lon,
       });
 
+      let formattedAddress = "Localização Atual";
+
       if (reverseGeocode && reverseGeocode.length > 0) {
         const address = reverseGeocode[0];
         const rua = address.street || "";
         const numero = address.streetNumber ? `, ${address.streetNumber}` : "";
-        const formattedAddress = rua ? `${rua}${numero}` : (address.district || "Minha Localização");
-
-        console.log("⚡ Endereço resolvido em background:", formattedAddress);
-
-        // Injeta o formattedAddress dentro do objeto de região atualizado
-        const updatedRegionWithAddress = {
-          ...currentRegion,
-          formattedAddress: formattedAddress,
-        };
-
-        console.log("📦 Location atualizado com formattedAddress:", updatedRegionWithAddress);
-        
-        // Dispara o callback atualizando apenas o texto sem interferir na física do mapa
-        if (onUserLocationFound) {
-          onUserLocationFound(updatedRegionWithAddress, formattedAddress);
-        }
+        formattedAddress = rua ? `${rua}${numero}` : (address.district || "Minha Localização");
       }
+
+      console.log("⚡ Endereço resolvido em background:", formattedAddress);
+
+      // Injeta o formattedAddress dentro do objeto de região atualizado
+      const updatedRegionWithAddress = {
+        ...currentRegion,
+        formattedAddress: formattedAddress,
+      };
+
+      console.log("📦 Location atualizado com formattedAddress:", updatedRegionWithAddress);
+      
+      // 🔹 CORREÇÃO AQUI: Salva no cache contendo o formattedAddress injetado!
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(updatedRegionWithAddress));
+
+      // Dispara o callback atualizando apenas o texto sem interferir na física do mapa
+      if (onUserLocationFound) {
+        onUserLocationFound(updatedRegionWithAddress, formattedAddress);
+      }
+
     } catch (error) {
       console.log("Erro na geocodificação reversa em background:", error);
+      
+      // Mesmo em caso de erro, garante o salvamento para não quebrar os inputs
+      const fallbackRegion = { ...currentRegion, formattedAddress: "Localização Atual" };
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(fallbackRegion));
     }
   };
 

@@ -1,9 +1,7 @@
+// components/ParaOndeVamos.tsx
 import { Ionicons } from "@expo/vector-icons";
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   BackHandler,
@@ -17,6 +15,7 @@ import {
 } from "react-native";
 
 const { width } = Dimensions.get("window");
+const CACHE_KEY = "@last_user_location";
 
 interface props {
   visible: boolean;
@@ -31,30 +30,25 @@ const enderecos = [
     latitude: -8.7601,
     longitude: -63.9002,
     titulo: "Rua Portuguesa, 6244",
-    subtitulo:
-      "Conjunto Jamari, Porto Velho - RO, 76812-612, Brasil",
+    subtitulo: "Conjunto Jamari, Porto Velho - RO, 76812-612, Brasil",
     distancia: "5.4km",
   },
-
   {
     endereco_formatado:
       "Rua Jobu Miró, 3287 - Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-608, Brasil",
     latitude: -8.7523,
     longitude: -63.8891,
     titulo: "Rua Jobu Miró, 3287",
-    subtitulo:
-      "Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-608, Brasil",
+    subtitulo: "Flodoaldo Pontes Pinto, Porto Velho - RO, 76820-608, Brasil",
     distancia: "3.2km",
   },
-
   {
     endereco_formatado:
       "Rua Brasília, 2930 - São Cristóvão, Porto Velho - RO, 76804-070, Brasil",
     latitude: -8.7488,
     longitude: -63.8734,
     titulo: "Rua Brasília, 2930",
-    subtitulo:
-      "São Cristóvão, Porto Velho - RO, 76804-070, Brasil",
+    subtitulo: "São Cristóvão, Porto Velho - RO, 76804-070, Brasil",
     distancia: "7km",
   },
 ];
@@ -64,42 +58,62 @@ export default function ParaOndevamos({
   onClose,
   duration = 300,
 }: props) {
-  const translateX = useRef(
-    new Animated.Value(width),
-  ).current;
+  const translateX = useRef(new Animated.Value(width)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
 
-  const overlayOpacity = useRef(
-    new Animated.Value(0),
-  ).current;
+  const [isMounted, setIsMounted] = useState(visible);
+  
+  // 🔹 Estados para controlar os textos dos Inputs
+  const [partidaTexto, setPartidaTexto] = useState("");
+  const [destinoTexto, setDestinoTexto] = useState("");
 
-  const [isMounted, setIsMounted] =
-    useState(visible);
+  // 🔹 Recupera a localização do cache e alimenta o input de partida
+  const carregarLocalizacaoSalva = async () => {
+    try {
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const locationData = JSON.parse(cached);
+        console.log(locationData, 'locationData')
+        // Se houver o endereço formatado injetado pelo mapa, alimenta o estado
+        if (locationData && locationData.formattedAddress) {
+          setPartidaTexto(locationData.formattedAddress);
+        } else {
+          setPartidaTexto("Localização Atual");
+        }
+      } else {
+        setPartidaTexto("");
+      }
+    } catch (error) {
+      console.log("Erro ao recuperar endereço para o input:", error);
+      setPartidaTexto("");
+    }
+  };
 
   // Android back
   useEffect(() => {
     const onBackPress = () => {
       if (visible) {
         onClose();
-
         return true;
       }
-
       return false;
     };
 
-    const subscription =
-      BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress,
-      );
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
 
     return () => subscription.remove();
   }, [visible, onClose]);
 
-  // animations
+  // animations e busca de endereço
   useEffect(() => {
     if (visible) {
       setIsMounted(true);
+      
+      // 🔹 Busca o endereço do cache sempre que a tela abrir
+      carregarLocalizacaoSalva();
 
       Animated.parallel([
         Animated.timing(translateX, {
@@ -107,7 +121,6 @@ export default function ParaOndevamos({
           duration,
           useNativeDriver: true,
         }),
-
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: duration * 0.8,
@@ -121,7 +134,6 @@ export default function ParaOndevamos({
           duration,
           useNativeDriver: true,
         }),
-
         Animated.timing(overlayOpacity, {
           toValue: 0,
           duration: duration * 0.8,
@@ -133,33 +145,19 @@ export default function ParaOndevamos({
         }
       });
     }
-  }, [
-    visible,
-    translateX,
-    overlayOpacity,
-    duration,
-  ]);
+  }, [visible, translateX, overlayOpacity, duration]);
 
   if (!isMounted) return null;
 
   return (
-    <View
-      style={[
-        StyleSheet.absoluteFill,
-        { zIndex: 30 },
-      ]}
-    >
+    <View style={[StyleSheet.absoluteFill, { zIndex: 30 }]}>
       {/* Overlay */}
-      <Pressable
-        style={StyleSheet.absoluteFill}
-        onPress={onClose}
-      >
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor:
-                "rgba(0,0,0,0.25)",
+              backgroundColor: "rgba(0,0,0,0.25)",
               opacity: overlayOpacity,
             },
           ]}
@@ -178,40 +176,17 @@ export default function ParaOndevamos({
       >
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.backButton}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={24}
-              color="black"
-            />
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="black" />
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
             {/* Usuário */}
-            <View
-              style={styles.userContainer}
-            >
+            <View style={styles.userContainer}>
               <View style={styles.userPill}>
-                <Ionicons
-                  name="person-circle"
-                  size={28}
-                  color="#666"
-                />
-
-                <Text
-                  style={styles.userName}
-                >
-                  Diogo
-                </Text>
-
-                <Ionicons
-                  name="chevron-down"
-                  size={16}
-                  color="#666"
-                />
+                <Ionicons name="person-circle" size={28} color="#666" />
+                <Text style={styles.userName}>Diogo</Text>
+                <Ionicons name="chevron-down" size={16} color="#666" />
               </View>
             </View>
           </View>
@@ -222,60 +197,39 @@ export default function ParaOndevamos({
         <View style={{ padding: 10 }} />
 
         {/* Título */}
-        <Text style={styles.title}>
-          Para onde vamos?
-        </Text>
+        <Text style={styles.title}>Para onde vamos?</Text>
 
         {/* INPUTS */}
         <View style={styles.searchContainer}>
           {/* Linha lateral */}
           <View style={styles.lineContainer}>
             <View style={styles.circleTop} />
-
-            <View
-              style={styles.verticalLine}
-            />
-
-            <View
-              style={styles.circleBottom}
-            />
+            <View style={styles.verticalLine} />
+            <View style={styles.circleBottom} />
           </View>
 
-          <View
-            style={styles.inputsContainer}
-          >
+          <View style={styles.inputsContainer}>
             {/* PARTIDA */}
             <View style={styles.searchInput}>
-              <Ionicons
-                name="navigate-outline"
-                size={18}
-                color="#666"
-              />
-
+              <Ionicons name="navigate-outline" size={18} color="#666" />
               <TextInput
                 style={styles.input}
                 placeholder="Local de partida"
                 placeholderTextColor="#999"
+                value={partidaTexto}
+                onChangeText={setPartidaTexto} // Permite o usuário mudar manualmente se quiser
               />
             </View>
 
             {/* DESTINO */}
-            <View
-              style={[
-                styles.searchInput,
-                styles.searchInputDestination,
-              ]}
-            >
-              <Ionicons
-                name="flag-outline"
-                size={18}
-                color="#FF5500"
-              />
-
+            <View style={[styles.searchInput, styles.searchInputDestination]}>
+              <Ionicons name="flag-outline" size={18} color="#FF5500" />
               <TextInput
                 style={styles.input}
                 placeholder="Para onde você vai?"
                 placeholderTextColor="#999"
+                value={destinoTexto}
+                onChangeText={setDestinoTexto}
               />
             </View>
           </View>
@@ -283,71 +237,24 @@ export default function ParaOndevamos({
 
         {/* AÇÕES RÁPIDAS */}
         <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickButton}
-          >
-            <Ionicons
-              name="home"
-              size={16}
-              color="#5F6368"
-            />
-
-            <Text
-              numberOfLines={1}
-              style={styles.quickText}
-            >
+          <TouchableOpacity style={styles.quickButton}>
+            <Ionicons name="home" size={16} color="#5F6368" />
+            <Text numberOfLines={1} style={styles.quickText}>
               Avenida Bo...
             </Text>
-
-            <Ionicons
-              name="chevron-forward"
-              size={14}
-              color="#B0B0B0"
-            />
+            <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.quickButton}
-          >
-            <Ionicons
-              name="briefcase"
-              size={16}
-              color="#5F6368"
-            />
-
-            <Text
-              style={styles.quickText}
-            >
-              Trabalho
-            </Text>
-
-            <Ionicons
-              name="chevron-forward"
-              size={14}
-              color="#B0B0B0"
-            />
+          <TouchableOpacity style={styles.quickButton}>
+            <Ionicons name="briefcase" size={16} color="#5F6368" />
+            <Text style={styles.quickText}>Trabalho</Text>
+            <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.quickButton}
-          >
-            <Ionicons
-              name="star"
-              size={16}
-              color="#5F6368"
-            />
-
-            <Text
-              style={styles.quickText}
-            >
-              Favoritos
-            </Text>
-
-            <Ionicons
-              name="chevron-forward"
-              size={14}
-              color="#B0B0B0"
-            />
+          <TouchableOpacity style={styles.quickButton}>
+            <Ionicons name="star" size={16} color="#5F6368" />
+            <Text style={styles.quickText}>Favoritos</Text>
+            <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
           </TouchableOpacity>
         </View>
 
@@ -356,52 +263,20 @@ export default function ParaOndevamos({
 
         {/* LISTA */}
         <View style={styles.list}>
-          {enderecos.map(
-            (endereco, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.listItem}
-              >
-                <View
-                  style={
-                    styles.listIconContainer
-                  }
-                >
-                  <Ionicons
-                    name="time"
-                    size={14}
-                    color="#111"
-                  />
-                </View>
+          {enderecos.map((endereco, index) => (
+            <TouchableOpacity key={index} style={styles.listItem}>
+              <View style={styles.listIconContainer}>
+                <Ionicons name="time" size={14} color="#111" />
+              </View>
 
-                <View
-                  style={styles.listContent}
-                >
-                  <Text
-                    style={styles.listText}
-                  >
-                    {endereco.titulo}
-                  </Text>
+              <View style={styles.listContent}>
+                <Text style={styles.listText}>{endereco.titulo}</Text>
+                <Text style={styles.listSubText}>{endereco.subtitulo}</Text>
+              </View>
 
-                  <Text
-                    style={
-                      styles.listSubText
-                    }
-                  >
-                    {endereco.subtitulo}
-                  </Text>
-                </View>
-
-                <Text
-                  style={
-                    styles.distanceText
-                  }
-                >
-                  {endereco.distancia}
-                </Text>
-              </TouchableOpacity>
-            ),
-          )}
+              <Text style={styles.distanceText}>{endereco.distancia}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </Animated.View>
     </View>
