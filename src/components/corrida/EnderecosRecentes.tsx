@@ -96,6 +96,25 @@ const EnderecosRecentes = forwardRef<
     carregarHistoricoCache();
   }, []);
 
+  // Método para apagar o endereço selecionado do cache
+  const removerEnderecoDoCache = async (enderecoParaRemover: EnderecoItem) => {
+    try {
+      const historicoAtualizado = historicoCache.filter(
+        (item) =>
+          item.formattedAddress !== enderecoParaRemover.formattedAddress,
+      );
+
+      setHistoricoCache(historicoAtualizado);
+      await AsyncStorage.setItem(
+        CACHE_HISTORICO_KEY,
+        JSON.stringify(historicoAtualizado),
+      );
+      console.log("🗑️ Endereço removido do cache com sucesso!");
+    } catch (error) {
+      console.log("Erro ao remover endereço do cache:", error);
+    }
+  };
+
   // Expõe a função de salvar para ser chamada pelo componente Pai no handleSelecionarEndereco
   useImperativeHandle(ref, () => ({
     salvarEnderecoNoCache: async (novoEndereco: EnderecoItem) => {
@@ -213,9 +232,13 @@ const EnderecosRecentes = forwardRef<
                 style={styles.listItem}
                 onPress={() => onSelecionarEndereco(endereco)}
               >
-                <View style={styles.listIconContainer}>
-                  <Ionicons name="time" size={14} color="#111" />
-                </View>
+                <TouchableOpacity
+                  style={styles.listIconContainer}
+                  onPress={() => removerEnderecoDoCache(endereco)}
+                >
+                  {/* <Ionicons name="time" size={14} color="#111" /> */}
+                  <Ionicons name="close" size={14} color="#111" />
+                </TouchableOpacity>
 
                 <View style={styles.listContent}>
                   <Text style={styles.listText}>{endereco.name}</Text>
