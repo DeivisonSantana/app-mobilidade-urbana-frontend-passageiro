@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { api } from "../Services/api";
 
-
 const { width } = Dimensions.get("window");
 const CACHE_KEY = "@last_user_location";
 
@@ -64,18 +63,49 @@ export default function ParaOndevamos({
   const translateX = useRef(new Animated.Value(width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   
-  // 🔹 Referência para controlar o foco do input
+  // Opacidade para o efeito de pulsação das barras cinzas do esqueleto de carregamento
+  const skeletonOpacity = useRef(new Animated.Value(0.4)).current;
+
   const destinoInputRef = useRef<TextInput>(null);
 
   const [isMounted, setIsMounted] = useState(visible);
   
   const [partidaTexto, setPartidaTexto] = useState("");
   const [destinoTexto, setDestinoTexto] = useState("");
-  
-  // 🔹 Estado que junta a lista estática com os resultados buscados do Backend
   const [listaEnderecos, setListaEnderecos] = useState(enderecosEstaticos);
+  
+  // 🔹 Estado de carregamento
+  const [loading, setLoading] = useState(false);
 
-  // 🔹 Recupera a localização do cache e alimenta o input de partida
+  // Animação infinita em loop para simular o efeito de esqueleto piscando suavemente
+  useEffect(() => {
+    let animationLoop: Animated.CompositeAnimation | null = null;
+
+    if (loading) {
+      animationLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(skeletonOpacity, {
+            toValue: 0.8,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(skeletonOpacity, {
+            toValue: 0.4,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      animationLoop.start();
+    } else {
+      skeletonOpacity.setValue(0.4);
+    }
+
+    return () => {
+      if (animationLoop) animationLoop.stop();
+    };
+  }, [loading]);
+
   const carregarLocalizacaoSalva = async () => {
     try {
       const cached = await AsyncStorage.getItem(CACHE_KEY);
@@ -95,25 +125,26 @@ export default function ParaOndevamos({
     }
   };
 
-  // 🔹 Função que bate no seu Backend buscando o endereço digitado
   const buscarEnderecoApi = async (texto: string) => {
-    if (!texto || texto.trim().length < 0) {
+    if (!texto || texto.trim().length === 0) {
       setListaEnderecos(enderecosEstaticos);
+      setLoading(false);
       return;
     }
 
+    // 🔹 Inicia o estado de carregamento
+    setLoading(true);
+
     try {
-      // Altere a rota abaixo para corresponder exatamente à rota da sua API Laravel
       const response = await api.get("/buscar-endereco", {
         params: { endereco: texto },
       });
 
-      console.log(response.data, 'response')
+      console.log(response.data, 'response');
 
       if (response.data) {
         const { formattedAddress, latitude, longitude } = response.data;
 
-        // Trata os textos para quebrar em Título e Subtítulo visualmente na lista
         const partes = formattedAddress.split(" - ");
         const tituloDigitado = partes[0] || formattedAddress;
         const subtituloDigitado = partes[1] || "";
@@ -124,18 +155,19 @@ export default function ParaOndevamos({
           longitude: longitude,
           titulo: tituloDigitado,
           subtitulo: subtituloDigitado,
-          distancia: "--", // Distância opcional vinda da API ou fixa
+          distancia: "--",
         };
 
-        // Injeta o resultado dinâmico no topo combinado com os estáticos
         setListaEnderecos([novoEnderecoObjeto, ...enderecosEstaticos]);
       }
     } catch (error) {
       console.log("Erro ao buscar endereço no backend:", error);
+    } finally {
+      // 🔹 Para o estado de carregamento
+      setLoading(false);
     }
   };
 
-  // 🔹 Efeito para rodar o Debounce a cada caractere digitado (espera 600ms antes de chamar o back)
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (visible) {
@@ -146,7 +178,6 @@ export default function ParaOndevamos({
     return () => clearTimeout(delayDebounceFn);
   }, [destinoTexto]);
 
-  // 🔹 Método acionado ao clicar em qualquer item da lista
   const handleSelecionarEndereco = (item: typeof enderecosEstaticos[0]) => {
     setDestinoTexto(item.endereco_formatado);
     
@@ -158,7 +189,6 @@ export default function ParaOndevamos({
     });
   };
 
-  // Android back
   useEffect(() => {
     const onBackPress = () => {
       if (visible) {
@@ -176,7 +206,6 @@ export default function ParaOndevamos({
     return () => subscription.remove();
   }, [visible, onClose]);
 
-  // animations e busca de endereço
   useEffect(() => {
     if (visible) {
       setIsMounted(true);
@@ -194,7 +223,6 @@ export default function ParaOndevamos({
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // 🔹 Garante o foco e abre o teclado imediatamente após a gaveta completar a abertura
         setTimeout(() => {
           destinoInputRef.current?.focus();
         }, 100);
@@ -214,8 +242,9 @@ export default function ParaOndevamos({
       ]).start(({ finished }) => {
         if (finished) {
           setIsMounted(false);
-          setDestinoTexto(""); // Limpa o campo ao fechar
-          setListaEnderecos(enderecosEstaticos); // Reseta a lista
+          setDestinoTexto("");
+          setListaEnderecos(enderecosEstaticos);
+          setLoading(false);
         }
       });
     }
@@ -255,7 +284,6 @@ export default function ParaOndevamos({
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            {/* Usuário */}
             <View style={styles.userContainer}>
               <View style={styles.userPill}>
                 <Ionicons name="person-circle" size={28} color="#666" />
@@ -275,7 +303,6 @@ export default function ParaOndevamos({
 
         {/* INPUTS */}
         <View style={styles.searchContainer}>
-          {/* Linha lateral */}
           <View style={styles.lineContainer}>
             <View style={styles.circleTop} />
             <View style={styles.verticalLine} />
@@ -299,12 +326,12 @@ export default function ParaOndevamos({
             <View style={[styles.searchInput, styles.searchInputDestination]}>
               <Ionicons name="flag-outline" size={18} color="#FF5500" />
               <TextInput
-                ref={destinoInputRef} // 🔹 Referência adicionada para autofoco
+                ref={destinoInputRef}
                 style={styles.input}
                 placeholder="Para onde você vai?"
                 placeholderTextColor="#999"
                 value={destinoTexto}
-                onChangeText={setDestinoTexto} // 🔹 Atualiza e dispara a busca com debounce
+                onChangeText={setDestinoTexto}
               />
             </View>
           </View>
@@ -336,31 +363,46 @@ export default function ParaOndevamos({
         {/* DIVIDER */}
         <View style={styles.divider} />
 
-        {/* LISTA */}
+        {/* LISTA / SKELETON LOAD */}
         <View style={styles.list}>
-          {listaEnderecos.map((endereco, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.listItem}
-              onPress={() => handleSelecionarEndereco(endereco)} // 🔹 Evento de clique adicionado
-            >
-              <View style={styles.listIconContainer}>
-                <Ionicons name="time" size={14} color="#111" />
-              </View>
+          {loading ? (
+            // 🔹 Renderização do efeito Skeleton idêntico ao vídeo em anexo enquanto carrega
+            Array.from({ length: 4 }).map((_, i) => (
+              <Animated.View key={i} style={[styles.listItem, { opacity: skeletonOpacity }]}>
+                <View style={[styles.listIconContainer, { backgroundColor: "#EBEBEB" }]} />
+                <View style={styles.listContent}>
+                  <View style={{ width: "60%", height: 14, backgroundColor: "#EBEBEB", borderRadius: 4, marginBottom: 8 }} />
+                  <View style={{ width: "90%", height: 10, backgroundColor: "#EBEBEB", borderRadius: 4 }} />
+                </View>
+              </Animated.View>
+            ))
+          ) : (
+            // Exibição normal da lista quando o loading é encerrado
+            listaEnderecos.map((endereco, index) => (
+              <TouchableOpacity 
+                key={index} 
+                style={styles.listItem}
+                onPress={() => handleSelecionarEndereco(endereco)}
+              >
+                <View style={styles.listIconContainer}>
+                  <Ionicons name="time" size={14} color="#111" />
+                </View>
 
-              <View style={styles.listContent}>
-                <Text style={styles.listText}>{endereco.titulo}</Text>
-                <Text style={styles.listSubText}>{endereco.subtitulo}</Text>
-              </View>
+                <View style={styles.listContent}>
+                  <Text style={styles.listText}>{endereco.titulo}</Text>
+                  <Text style={styles.listSubText}>{endereco.subtitulo}</Text>
+                </View>
 
-              <Text style={styles.distanceText}>{endereco.distancia}</Text>
-            </TouchableOpacity>
-          ))}
+                <Text style={styles.distanceText}>{endereco.distancia}</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </Animated.View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   drawer: {
     position: "absolute",
@@ -372,28 +414,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginTop: 30,
   },
-
   backButton: {
     marginTop: 10,
   },
-
   headerCenter: {
     alignItems: "center",
   },
-
   userContainer: {
     alignItems: "center",
     marginTop: 24,
     marginBottom: 30,
   },
-
   userPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -402,57 +439,48 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
   },
-
   userName: {
     fontSize: 15,
     color: "#111",
     fontWeight: "600",
     marginHorizontal: 8,
   },
-
   title: {
     fontSize: 28,
     fontWeight: "700",
     color: "#000",
     marginBottom: 28,
   },
-
   searchContainer: {
     flexDirection: "row",
     marginBottom: 24,
   },
-
   lineContainer: {
     alignItems: "center",
     marginRight: 14,
     paddingTop: 10,
   },
-
   circleTop: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: "#666",
   },
-
   verticalLine: {
     width: 2,
     flex: 1,
     backgroundColor: "#DDD",
     marginVertical: 4,
   },
-
   circleBottom: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: "#FF5500",
   },
-
   inputsContainer: {
     flex: 1,
   },
-
   searchInput: {
     flexDirection: "row",
     alignItems: "center",
@@ -460,11 +488,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#ECECEC",
   },
-
   searchInputDestination: {
     borderBottomColor: "#FFD7BF",
   },
-
   input: {
     flex: 1,
     marginLeft: 10,
@@ -472,21 +498,18 @@ const styles = StyleSheet.create({
     color: "#111",
     fontWeight: "500",
   },
-
   quickActions: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 18,
   },
-
   quickButton: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
     marginHorizontal: 4,
   },
-
   quickText: {
     flex: 1,
     fontSize: 14,
@@ -495,24 +518,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginRight: 4,
   },
-
   divider: {
     height: 1,
     backgroundColor: "#F1F1F1",
     marginHorizontal: -24,
     marginBottom: 8,
   },
-
   list: {
     marginTop: 4,
   },
-
   listItem: {
     flexDirection: "row",
     alignItems: "flex-start",
     paddingVertical: 14,
   },
-
   listIconContainer: {
     width: 28,
     height: 28,
@@ -523,26 +542,22 @@ const styles = StyleSheet.create({
     marginRight: 14,
     marginTop: 2,
   },
-
   listContent: {
     flex: 1,
     paddingRight: 10,
   },
-
   listText: {
     fontSize: 16,
     color: "#2B2B2B",
     fontWeight: "700",
     marginBottom: 3,
   },
-
   listSubText: {
     fontSize: 13,
     lineHeight: 18,
     color: "#909090",
     fontWeight: "400",
   },
-
   distanceText: {
     fontSize: 14,
     color: "#9B9B9B",

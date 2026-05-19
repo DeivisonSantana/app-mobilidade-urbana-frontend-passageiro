@@ -54,6 +54,7 @@ export default function Map({
 
       if (reverseGeocode && reverseGeocode.length > 0) {
         const address = reverseGeocode[0];
+        console.log(address, 'addressaddressaddress')
         const rua = address.street || "";
         const numero = address.streetNumber ? `, ${address.streetNumber}` : "";
         formattedAddress = rua ? `${rua}${numero}` : (address.district || "Minha Localização");
