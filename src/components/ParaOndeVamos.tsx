@@ -1,4 +1,6 @@
 // components/ParaOndeVamos.tsx
+
+import EnderecosRecentes from "@/components/corrida/EnderecosRecentes";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
@@ -24,8 +26,36 @@ interface props {
   duration?: number;
 }
 
+interface EnderecoItem {
+  name: string;
+  formattedAddress: string;
+  latitude: number;
+  longitude: number;
+  distancia: string | number;
+  order: number;
+}
+
+const InputsIntinearioInicial: EnderecoItem[] = [
+  {
+    name: "",
+    formattedAddress: "",
+    latitude: 0,
+    longitude: 0,
+    distancia: 0,
+    order: 0,
+  },
+  {
+    name: "",
+    formattedAddress: "",
+    latitude: 0,
+    longitude: 0,
+    distancia: 0,
+    order: 1,
+  },
+];
+
 // Lista base estática padrão
-const enderecosEstaticos = [
+const enderecosRecentes = [
   {
     name: "Rua Portuguesa, 6244",
     formattedAddress:
@@ -59,22 +89,110 @@ export default function ParaOndevamos({
 }: props) {
   const translateX = useRef(new Animated.Value(width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-
-  // Opacidade para o efeito de pulsação das barras cinzas do esqueleto de carregamento
   const skeletonOpacity = useRef(new Animated.Value(0.4)).current;
-
-  const destinoInputRef = useRef<TextInput>(null);
 
   const [isMounted, setIsMounted] = useState(visible);
 
-  const [partidaTexto, setPartidaTexto] = useState("");
-  const [destinoTexto, setDestinoTexto] = useState("");
-  const [listaEnderecos, setListaEnderecos] = useState(enderecosEstaticos);
+  const [listaEnderecos, setListaEnderecos] = useState(enderecosRecentes);
 
-  // 🔹 Estado de carregamento
   const [loading, setLoading] = useState(false);
 
-  // Animação infinita em loop para simular o efeito de esqueleto piscando suavemente
+  // 🔹 NOVO ESTADO DINÂMICO DOS INPUTS
+  const [inputsIntinerario, setInputsIntinerario] = useState<EnderecoItem[]>(
+    InputsIntinearioInicial,
+  );
+
+  // 🔹 INPUT ATUAL SELECIONADO
+  const [inputSelecionado, setInputSelecionado] = useState<number>(1);
+
+  // 🔹 refs dinâmicos
+  const inputRefs = useRef<TextInput[]>([]);
+
+  // 🔹 Reorganiza os orders
+  const reorganizarOrders = (lista: EnderecoItem[]) => {
+    return lista.map((item, index) => ({
+      ...item,
+      order: index,
+    }));
+  };
+
+  // 🔹 Adicionar parada
+  const adicionarParada = () => {
+    setInputsIntinerario((prev) => {
+      const novaLista = [...prev];
+
+      novaLista.splice(novaLista.length - 1, 0, {
+        name: "",
+        formattedAddress: "",
+        latitude: 0,
+        longitude: 0,
+        distancia: 0,
+        order: 0,
+      });
+
+      return reorganizarOrders(novaLista);
+    });
+  };
+
+  // 🔹 Remover parada
+  const removerParada = (index: number) => {
+    if (index === 0) return;
+    if (index === inputsIntinerario.length - 1) return;
+
+    setInputsIntinerario((prev) => {
+      const novaLista = prev.filter((_, i) => i !== index);
+
+      return reorganizarOrders(novaLista);
+    });
+  };
+
+  // 🔹 Mover parada para cima
+  const moverParaCima = (index: number) => {
+    if (index <= 1) return;
+
+    setInputsIntinerario((prev) => {
+      const novaLista = [...prev];
+
+      [novaLista[index - 1], novaLista[index]] = [
+        novaLista[index],
+        novaLista[index - 1],
+      ];
+
+      return reorganizarOrders(novaLista);
+    });
+  };
+
+  // 🔹 Mover parada para baixo
+  const moverParaBaixo = (index: number) => {
+    if (index >= inputsIntinerario.length - 2) return;
+
+    setInputsIntinerario((prev) => {
+      const novaLista = [...prev];
+
+      [novaLista[index], novaLista[index + 1]] = [
+        novaLista[index + 1],
+        novaLista[index],
+      ];
+
+      return reorganizarOrders(novaLista);
+    });
+  };
+
+  // 🔹 Atualizar texto do input
+  const atualizarInput = (texto: string, index: number) => {
+    setInputsIntinerario((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              name: texto,
+            }
+          : item,
+      ),
+    );
+  };
+
+  // 🔹 Skeleton animation
   useEffect(() => {
     let animationLoop: Animated.CompositeAnimation | null = null;
 
@@ -93,6 +211,7 @@ export default function ParaOndevamos({
           }),
         ]),
       );
+
       animationLoop.start();
     } else {
       skeletonOpacity.setValue(0.4);
@@ -103,28 +222,35 @@ export default function ParaOndevamos({
     };
   }, [loading]);
 
+  // 🔹 Carregar origem salva
   const carregarLocalizacaoSalva = async () => {
     try {
       const cached = await AsyncStorage.getItem(CACHE_KEY);
+
       if (cached) {
         const locationData = JSON.parse(cached);
-        if (locationData && locationData.formattedAddress) {
-          setPartidaTexto(locationData.formattedAddress);
-        } else {
-          setPartidaTexto("Localização Atual");
-        }
-      } else {
-        setPartidaTexto("");
+
+        setInputsIntinerario((prev) =>
+          prev.map((item, index) =>
+            index === 0
+              ? {
+                  ...item,
+                  name: locationData.formattedAddress || "Localização Atual",
+                  formattedAddress: locationData.formattedAddress || "",
+                }
+              : item,
+          ),
+        );
       }
     } catch (error) {
       console.log("Erro ao recuperar endereço para o input:", error);
-      setPartidaTexto("");
     }
   };
 
+  // 🔹 Buscar endereço
   const buscarEnderecoApi = async (texto: string) => {
     if (!texto || texto.trim().length === 0) {
-      setListaEnderecos(enderecosEstaticos);
+      setListaEnderecos(enderecosRecentes);
       setLoading(false);
       return;
     }
@@ -135,8 +261,6 @@ export default function ParaOndevamos({
       const response = await api.get("/buscar-endereco", {
         params: { endereco: texto },
       });
-
-      console.log(response.data, "response");
 
       if (response.data) {
         const { name, formattedAddress, latitude, longitude } = response.data;
@@ -149,7 +273,7 @@ export default function ParaOndevamos({
           distancia: "--",
         };
 
-        setListaEnderecos([novoEnderecoObjeto, ...enderecosEstaticos]);
+        setListaEnderecos([novoEnderecoObjeto, ...enderecosRecentes]);
       }
     } catch (error) {
       console.log("Erro ao buscar endereço no backend:", error);
@@ -157,26 +281,40 @@ export default function ParaOndevamos({
       setLoading(false);
     }
   };
+
+  // 🔹 debounce baseado no input selecionado
   useEffect(() => {
+    const textoAtual = inputsIntinerario[inputSelecionado]?.name || "";
+
     const delayDebounceFn = setTimeout(() => {
       if (visible) {
-        buscarEnderecoApi(destinoTexto);
+        buscarEnderecoApi(textoAtual);
       }
     }, 600);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [destinoTexto]);
+  }, [inputsIntinerario, inputSelecionado]);
 
-  const handleSelecionarEndereco = (item: (typeof enderecosEstaticos)[0]) => {
-    // agora o input recebe o NAME
-    setDestinoTexto(item.name);
+  // 🔹 Selecionar endereço
+  const handleSelecionarEndereco = (item: (typeof enderecosRecentes)[0]) => {
+    setInputsIntinerario((prev) =>
+      prev.map((input, index) =>
+        index === inputSelecionado
+          ? {
+              ...input,
+              name: item.name,
+              formattedAddress: item.formattedAddress,
+              latitude: item.latitude,
+              longitude: item.longitude,
+            }
+          : input,
+      ),
+    );
 
     console.log("📍 Endereço Selecionado com Sucesso!");
-    console.log("📦 Dados do Destino:", {
-      name: item.name,
-      formattedAddress: item.formattedAddress,
-      lat: item.latitude,
-      lng: item.longitude,
+
+    console.log("📦 Itinerário Atualizado:", {
+      inputsIntinerario,
     });
   };
 
@@ -186,6 +324,7 @@ export default function ParaOndevamos({
         onClose();
         return true;
       }
+
       return false;
     };
 
@@ -200,6 +339,7 @@ export default function ParaOndevamos({
   useEffect(() => {
     if (visible) {
       setIsMounted(true);
+
       carregarLocalizacaoSalva();
 
       Animated.parallel([
@@ -208,6 +348,7 @@ export default function ParaOndevamos({
           duration,
           useNativeDriver: true,
         }),
+
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: duration * 0.8,
@@ -215,7 +356,7 @@ export default function ParaOndevamos({
         }),
       ]).start(() => {
         setTimeout(() => {
-          destinoInputRef.current?.focus();
+          inputRefs.current[1]?.focus();
         }, 100);
       });
     } else {
@@ -225,6 +366,7 @@ export default function ParaOndevamos({
           duration,
           useNativeDriver: true,
         }),
+
         Animated.timing(overlayOpacity, {
           toValue: 0,
           duration: duration * 0.8,
@@ -233,8 +375,11 @@ export default function ParaOndevamos({
       ]).start(({ finished }) => {
         if (finished) {
           setIsMounted(false);
-          setDestinoTexto("");
-          setListaEnderecos(enderecosEstaticos);
+
+          setInputsIntinerario(InputsIntinearioInicial);
+
+          setListaEnderecos(enderecosRecentes);
+
           setLoading(false);
         }
       });
@@ -278,7 +423,9 @@ export default function ParaOndevamos({
             <View style={styles.userContainer}>
               <View style={styles.userPill}>
                 <Ionicons name="person-circle" size={28} color="#666" />
+
                 <Text style={styles.userName}>Diogo</Text>
+
                 <Ionicons name="chevron-down" size={16} color="#666" />
               </View>
             </View>
@@ -292,126 +439,136 @@ export default function ParaOndevamos({
         {/* Título */}
         <Text style={styles.title}>Para onde vamos?</Text>
 
-        {/* INPUTS */}
+        {/* INPUTS DINÂMICOS */}
         <View style={styles.searchContainer}>
           <View style={styles.lineContainer}>
-            <View style={styles.circleTop} />
-            <View style={styles.verticalLine} />
-            <View style={styles.circleBottom} />
+            {inputsIntinerario.map((_, index) => (
+              <React.Fragment key={index}>
+                <View
+                  style={[
+                    styles.circleTop,
+                    index === inputsIntinerario.length - 1
+                      ? styles.circleBottom
+                      : null,
+                  ]}
+                />
+
+                {index !== inputsIntinerario.length - 1 && (
+                  <View style={styles.verticalLine} />
+                )}
+              </React.Fragment>
+            ))}
           </View>
 
           <View style={styles.inputsContainer}>
-            {/* PARTIDA */}
-            <View style={styles.searchInput}>
-              <Ionicons name="navigate-outline" size={18} color="#666" />
-              <TextInput
-                style={styles.input}
-                placeholder="Local de partida"
-                placeholderTextColor="#999"
-                value={partidaTexto}
-                onChangeText={setPartidaTexto}
-              />
-            </View>
+            {inputsIntinerario.map((item, index) => {
+              const isOrigem = index === 0;
 
-            {/* DESTINO */}
-            <View style={[styles.searchInput, styles.searchInputDestination]}>
-              <Ionicons name="flag-outline" size={18} color="#FF5500" />
-              <TextInput
-                ref={destinoInputRef}
-                style={styles.input}
-                placeholder="Para onde você vai?"
-                placeholderTextColor="#999"
-                value={destinoTexto}
-                onChangeText={setDestinoTexto}
-              />
-            </View>
+              const isDestino = index === inputsIntinerario.length - 1;
+
+              const isParada = !isOrigem && !isDestino;
+
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.searchInput,
+                    isDestino && styles.searchInputDestination,
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      isOrigem
+                        ? "navigate-outline"
+                        : isDestino
+                          ? "flag-outline"
+                          : "pause-outline"
+                    }
+                    size={18}
+                    color={isDestino ? "#FF5500" : "#666"}
+                  />
+
+                  <TextInput
+                    ref={(ref) => {
+                      if (ref) {
+                        inputRefs.current[index] = ref;
+                      }
+                    }}
+                    style={styles.input}
+                    placeholder={
+                      isOrigem
+                        ? "Local de partida"
+                        : isDestino
+                          ? "Para onde você vai?"
+                          : "Parada"
+                    }
+                    placeholderTextColor="#999"
+                    value={item.name}
+                    onFocus={() => setInputSelecionado(index)}
+                    onChangeText={(texto) => atualizarInput(texto, index)}
+                  />
+
+                  {/* CONTROLES DE PARADA */}
+                  {isParada && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <TouchableOpacity onPress={() => moverParaCima(index)}>
+                        <Ionicons name="chevron-up" size={18} color="#777" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => moverParaBaixo(index)}>
+                        <Ionicons name="chevron-down" size={18} color="#777" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => removerParada(index)}
+                        style={{
+                          marginLeft: 8,
+                        }}
+                      >
+                        <Ionicons name="close" size={20} color="#777" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+
+            {/* ADICIONAR PARADA */}
+            <TouchableOpacity
+              style={{
+                marginTop: 12,
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+              onPress={adicionarParada}
+            >
+              <Ionicons name="add" size={18} color="#666" />
+
+              <Text
+                style={{
+                  marginLeft: 6,
+                  color: "#666",
+                  fontWeight: "600",
+                }}
+              >
+                Adicionar parada
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* AÇÕES RÁPIDAS */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickButton}>
-            <Ionicons name="home" size={16} color="#5F6368" />
-            <Text numberOfLines={1} style={styles.quickText}>
-              Avenida Bo...
-            </Text>
-            <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.quickButton}>
-            <Ionicons name="briefcase" size={16} color="#5F6368" />
-            <Text style={styles.quickText}>Trabalho</Text>
-            <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.quickButton}>
-            <Ionicons name="star" size={16} color="#5F6368" />
-            <Text style={styles.quickText}>Favoritos</Text>
-            <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
-          </TouchableOpacity>
-        </View>
-
-        {/* DIVIDER */}
-        <View style={styles.divider} />
-
-        {/* LISTA / SKELETON LOAD */}
-        <View style={styles.list}>
-          {loading
-            ? // 🔹 Renderização do efeito Skeleton idêntico ao vídeo em anexo enquanto carrega
-              Array.from({ length: 4 }).map((_, i) => (
-                <Animated.View
-                  key={i}
-                  style={[styles.listItem, { opacity: skeletonOpacity }]}
-                >
-                  <View
-                    style={[
-                      styles.listIconContainer,
-                      { backgroundColor: "#EBEBEB" },
-                    ]}
-                  />
-                  <View style={styles.listContent}>
-                    <View
-                      style={{
-                        width: "60%",
-                        height: 14,
-                        backgroundColor: "#EBEBEB",
-                        borderRadius: 4,
-                        marginBottom: 8,
-                      }}
-                    />
-                    <View
-                      style={{
-                        width: "90%",
-                        height: 10,
-                        backgroundColor: "#EBEBEB",
-                        borderRadius: 4,
-                      }}
-                    />
-                  </View>
-                </Animated.View>
-              ))
-            : // Exibição normal da lista quando o loading é encerrado
-              listaEnderecos.map((endereco, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.listItem}
-                  onPress={() => handleSelecionarEndereco(endereco)}
-                >
-                  <View style={styles.listIconContainer}>
-                    <Ionicons name="time" size={14} color="#111" />
-                  </View>
-
-                  <View style={styles.listContent}>
-                    <Text style={styles.listText}>{endereco.name}</Text>
-                    <Text style={styles.listSubText}>
-                      {endereco.formattedAddress}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.distanceText}>{endereco.distancia}</Text>
-                </TouchableOpacity>
-              ))}
-        </View>
+        {/* LISTA / SKELETON LOAD COMPONENTIZADO */}
+        <EnderecosRecentes
+          loading={loading}
+          skeletonOpacity={skeletonOpacity}
+          listaEnderecos={listaEnderecos}
+          onSelecionarEndereco={handleSelecionarEndereco}
+        />
       </Animated.View>
     </View>
   );
@@ -428,23 +585,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginTop: 30,
   },
+
   backButton: {
     marginTop: 10,
   },
+
   headerCenter: {
     alignItems: "center",
   },
+
   userContainer: {
     alignItems: "center",
     marginTop: 24,
     marginBottom: 30,
   },
+
   userPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -453,128 +615,74 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
   },
+
   userName: {
     fontSize: 15,
     color: "#111",
     fontWeight: "600",
     marginHorizontal: 8,
   },
+
   title: {
     fontSize: 28,
     fontWeight: "700",
     color: "#000",
     marginBottom: 28,
   },
+
   searchContainer: {
     flexDirection: "row",
     marginBottom: 24,
   },
+
   lineContainer: {
     alignItems: "center",
     marginRight: 14,
     paddingTop: 10,
   },
+
   circleTop: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: "#666",
   },
+
   verticalLine: {
     width: 2,
     flex: 1,
     backgroundColor: "#DDD",
     marginVertical: 4,
   },
+
   circleBottom: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: "#FF5500",
   },
+
   inputsContainer: {
     flex: 1,
   },
+
   searchInput: {
     flexDirection: "row",
     alignItems: "center",
-    height: 56,
+    minHeight: 56,
     borderBottomWidth: 1,
     borderBottomColor: "#ECECEC",
   },
+
   searchInputDestination: {
     borderBottomColor: "#FFD7BF",
   },
+
   input: {
     flex: 1,
     marginLeft: 10,
     fontSize: 17,
     color: "#111",
     fontWeight: "500",
-  },
-  quickActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
-  quickButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  quickText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#5F6368",
-    fontWeight: "600",
-    marginLeft: 8,
-    marginRight: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F1F1F1",
-    marginHorizontal: -24,
-    marginBottom: 8,
-  },
-  list: {
-    marginTop: 4,
-  },
-  listItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 14,
-  },
-  listIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#F3F3F3",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-    marginTop: 2,
-  },
-  listContent: {
-    flex: 1,
-    paddingRight: 10,
-  },
-  listText: {
-    fontSize: 16,
-    color: "#2B2B2B",
-    fontWeight: "700",
-    marginBottom: 3,
-  },
-  listSubText: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#909090",
-    fontWeight: "400",
-  },
-  distanceText: {
-    fontSize: 14,
-    color: "#9B9B9B",
-    marginTop: 2,
   },
 });
