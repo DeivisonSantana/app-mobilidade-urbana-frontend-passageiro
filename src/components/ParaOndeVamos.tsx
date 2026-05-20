@@ -6,18 +6,12 @@ import EnderecosRecentes, {
 
 import InputsItinerario, {
   EnderecoItem,
-  InputsItinerarioRef,
 } from "@/components/corrida/InputsIntinerario";
 
 import { Ionicons } from "@expo/vector-icons";
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   Animated,
@@ -26,6 +20,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -42,77 +37,52 @@ interface props {
   duration?: number;
 }
 
-const InputsIntinearioInicial: EnderecoItem[] =
-  [
-    {
-      id: "origem",
-
-      name: "",
-
-      formattedAddress: "",
-
-      latitude: 0,
-
-      longitude: 0,
-
-      distancia: 0,
-
-      order: 0,
-    },
-
-    {
-      id: "destino",
-
-      name: "",
-
-      formattedAddress: "",
-
-      latitude: 0,
-
-      longitude: 0,
-
-      distancia: 0,
-
-      order: 1,
-    },
-  ];
+const InputsIntinearioInicial: EnderecoItem[] = [
+  {
+    id: "origem",
+    name: "",
+    formattedAddress: "",
+    latitude: 0,
+    longitude: 0,
+    distancia: 0,
+    order: 0,
+  },
+  {
+    id: "destino",
+    name: "",
+    formattedAddress: "",
+    latitude: 0,
+    longitude: 0,
+    distancia: 0,
+    order: 1,
+  },
+];
 
 export default function ParaOndevamos({
   visible,
   onClose,
   duration = 300,
 }: props) {
-  const translateX = useRef(
-    new Animated.Value(width),
-  ).current;
+  const translateX = useRef(new Animated.Value(width)).current;
 
-  const overlayOpacity = useRef(
-    new Animated.Value(0),
-  ).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
 
-  const skeletonOpacity = useRef(
-    new Animated.Value(0.4),
-  ).current;
+  const skeletonOpacity = useRef(new Animated.Value(0.4)).current;
 
-  const [isMounted, setIsMounted] =
-    useState(visible);
+  const [isMounted, setIsMounted] = useState(visible);
 
-  const [listaEnderecos, setListaEnderecos] =
-    useState<any[]>([]);
+  const [listaEnderecos, setListaEnderecos] = useState<any[]>([]);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    inputsIntinerario,
-    setInputsIntinerario,
-  ] = useState<EnderecoItem[]>(
-    InputsIntinearioInicial,
-  );
+  const [inputsIntinerario, setInputsIntinerario] = useState<
+    EnderecoItem[]
+  >(InputsIntinearioInicial);
 
-  // REF DO COMPONENTE
-  const inputsItinerarioRef =
-    useRef<InputsItinerarioRef>(null);
+  const [inputSelecionado, setInputSelecionado] =
+    useState<number>(1);
+
+  const inputRefs = useRef<TextInput[]>([]);
 
   const enderecosRecentesRef =
     useRef<EnderecosRecentesRef>(null);
@@ -125,9 +95,9 @@ export default function ParaOndevamos({
       prev.map((item, i) =>
         i === index
           ? {
-            ...item,
-            name: texto,
-          }
+              ...item,
+              name: texto,
+            }
           : item,
       ),
     );
@@ -141,23 +111,17 @@ export default function ParaOndevamos({
     if (loading) {
       animationLoop = Animated.loop(
         Animated.sequence([
-          Animated.timing(
-            skeletonOpacity,
-            {
-              toValue: 0.8,
-              duration: 600,
-              useNativeDriver: true,
-            },
-          ),
+          Animated.timing(skeletonOpacity, {
+            toValue: 0.8,
+            duration: 600,
+            useNativeDriver: true,
+          }),
 
-          Animated.timing(
-            skeletonOpacity,
-            {
-              toValue: 0.4,
-              duration: 600,
-              useNativeDriver: true,
-            },
-          ),
+          Animated.timing(skeletonOpacity, {
+            toValue: 0.4,
+            duration: 600,
+            useNativeDriver: true,
+          }),
         ]),
       );
 
@@ -173,51 +137,41 @@ export default function ParaOndevamos({
     };
   }, [loading]);
 
-  const carregarLocalizacaoSalva =
-    async () => {
-      try {
-        const cached =
-          await AsyncStorage.getItem(
-            CACHE_KEY,
-          );
+  const carregarLocalizacaoSalva = async () => {
+    try {
+      const cached = await AsyncStorage.getItem(
+        CACHE_KEY,
+      );
 
-        if (cached) {
-          const locationData =
-            JSON.parse(cached);
+      if (cached) {
+        const locationData = JSON.parse(cached);
 
-          setInputsIntinerario((prev) =>
-            prev.map((item, index) =>
-              index === 0
-                ? {
+        setInputsIntinerario((prev) =>
+          prev.map((item, index) =>
+            index === 0
+              ? {
                   ...item,
-
                   name:
                     locationData.formattedAddress ||
                     "Localização Atual",
 
                   formattedAddress:
-                    locationData.formattedAddress ||
-                    "",
+                    locationData.formattedAddress || "",
                 }
-                : item,
-            ),
-          );
-        }
-      } catch (error) {
-        console.log(
-          "Erro ao recuperar endereço:",
-          error,
+              : item,
+          ),
         );
       }
-    };
+    } catch (error) {
+      console.log(
+        "Erro ao recuperar endereço para o input:",
+        error,
+      );
+    }
+  };
 
-  const buscarEnderecoApi = async (
-    texto: string,
-  ) => {
-    if (
-      !texto ||
-      texto.trim().length === 0
-    ) {
+  const buscarEnderecoApi = async (texto: string) => {
+    if (!texto || texto.trim().length === 0) {
       setListaEnderecos([]);
       setLoading(false);
       return;
@@ -245,23 +199,17 @@ export default function ParaOndevamos({
 
         const novoEnderecoObjeto = {
           name,
-
           formattedAddress,
-
           latitude,
-
           longitude,
-
           distancia: "--",
         };
 
-        setListaEnderecos([
-          novoEnderecoObjeto,
-        ]);
+        setListaEnderecos([novoEnderecoObjeto]);
       }
     } catch (error) {
       console.log(
-        "Erro ao buscar endereço:",
+        "Erro ao buscar endereço no backend:",
         error,
       );
     } finally {
@@ -270,80 +218,57 @@ export default function ParaOndevamos({
   };
 
   useEffect(() => {
-    const inputSelecionado =
-      inputsItinerarioRef.current?.getInputSelecionado() ||
-      0;
-
     const textoAtual =
-      inputsIntinerario[
-        inputSelecionado
-      ]?.name || "";
+      inputsIntinerario[inputSelecionado]?.name || "";
 
-    const delayDebounceFn =
-      setTimeout(() => {
-        if (visible) {
-          buscarEnderecoApi(
-            textoAtual,
-          );
-        }
-      }, 600);
+    const delayDebounceFn = setTimeout(() => {
+      if (visible) {
+        buscarEnderecoApi(textoAtual);
+      }
+    }, 600);
 
-    return () =>
-      clearTimeout(delayDebounceFn);
-  }, [inputsIntinerario, visible]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [
+    inputsIntinerario,
+    inputSelecionado,
+    visible,
+  ]);
 
-  const handleSelecionarEndereco =
-    async (item: any) => {
-      const inputSelecionado =
-        inputsItinerarioRef.current?.getInputSelecionado() ||
-        0;
-
-      setInputsIntinerario((prev) =>
-        prev.map((input, index) =>
-          index === inputSelecionado
-            ? {
+  const handleSelecionarEndereco = async (
+    item: any,
+  ) => {
+    setInputsIntinerario((prev) =>
+      prev.map((input, index) =>
+        index === inputSelecionado
+          ? {
               ...input,
-
               name: item.name,
-
               formattedAddress:
                 item.formattedAddress,
-
-              latitude:
-                item.latitude,
-
-              longitude:
-                item.longitude,
+              latitude: item.latitude,
+              longitude: item.longitude,
             }
-            : input,
-        ),
+          : input,
+      ),
+    );
+
+    if (enderecosRecentesRef.current) {
+      await enderecosRecentesRef.current.salvarEnderecoNoCache(
+        {
+          name: item.name,
+          formattedAddress:
+            item.formattedAddress,
+          latitude: item.latitude,
+          longitude: item.longitude,
+          distancia: item.distancia || "--",
+        },
       );
+    }
 
-      if (
-        enderecosRecentesRef.current
-      ) {
-        await enderecosRecentesRef.current.salvarEnderecoNoCache(
-          {
-            name: item.name,
-
-            formattedAddress:
-              item.formattedAddress,
-
-            latitude: item.latitude,
-
-            longitude:
-              item.longitude,
-
-            distancia:
-              item.distancia || "--",
-          },
-        );
-      }
-
-      console.log(
-        "📍 Endereço Selecionado!",
-      );
-    };
+    console.log(
+      "📍 Endereço Selecionado com Sucesso!",
+    );
+  };
 
   useEffect(() => {
     const onBackPress = () => {
@@ -361,8 +286,7 @@ export default function ParaOndevamos({
         onBackPress,
       );
 
-    return () =>
-      subscription.remove();
+    return () => subscription.remove();
   }, [visible, onClose]);
 
   useEffect(() => {
@@ -378,20 +302,14 @@ export default function ParaOndevamos({
           useNativeDriver: true,
         }),
 
-        Animated.timing(
-          overlayOpacity,
-          {
-            toValue: 1,
-            duration:
-              duration * 0.8,
-            useNativeDriver: true,
-          },
-        ),
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: duration * 0.8,
+          useNativeDriver: true,
+        }),
       ]).start(() => {
         setTimeout(() => {
-          inputsItinerarioRef.current?.focusInput(
-            1,
-          );
+          inputRefs.current[1]?.focus();
         }, 100);
       });
     } else {
@@ -402,15 +320,11 @@ export default function ParaOndevamos({
           useNativeDriver: true,
         }),
 
-        Animated.timing(
-          overlayOpacity,
-          {
-            toValue: 0,
-            duration:
-              duration * 0.8,
-            useNativeDriver: true,
-          },
-        ),
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: duration * 0.8,
+          useNativeDriver: true,
+        }),
       ]).start(({ finished }) => {
         if (finished) {
           setIsMounted(false);
@@ -452,9 +366,7 @@ export default function ParaOndevamos({
             {
               backgroundColor:
                 "rgba(0,0,0,0.25)",
-
-              opacity:
-                overlayOpacity,
+              opacity: overlayOpacity,
             },
           ]}
         />
@@ -465,10 +377,7 @@ export default function ParaOndevamos({
         style={[
           styles.drawer,
           {
-            transform: [
-              { translateX },
-            ],
-
+            transform: [{ translateX }],
             zIndex: 31,
           },
         ]}
@@ -486,24 +395,16 @@ export default function ParaOndevamos({
             />
           </TouchableOpacity>
 
-          <View
-            style={styles.headerCenter}
-          >
-            <View
-              style={styles.userContainer}
-            >
-              <View
-                style={styles.userPill}
-              >
+          <View style={styles.headerCenter}>
+            <View style={styles.userContainer}>
+              <View style={styles.userPill}>
                 <Ionicons
                   name="person-circle"
                   size={28}
                   color="#666"
                 />
 
-                <Text
-                  style={styles.userName}
-                >
+                <Text style={styles.userName}>
                   Diogo
                 </Text>
 
@@ -516,44 +417,33 @@ export default function ParaOndevamos({
             </View>
           </View>
 
-          <View
-            style={{ width: 24 }}
-          />
+          <View style={{ width: 24 }} />
         </View>
 
-        <View
-          style={{ padding: 10 }}
-        />
+        <View style={{ padding: 10 }} />
 
-        {/* TÍTULO */}
+        {/* Título */}
         <Text style={styles.title}>
           Para onde vamos?
         </Text>
 
         {/* INPUTS */}
         <InputsItinerario
-          ref={inputsItinerarioRef}
           inputsIntinerario={
             inputsIntinerario
           }
           setInputsIntinerario={
             setInputsIntinerario
           }
-          atualizarInput={
-            atualizarInput
-          }
+          atualizarInput={atualizarInput}
         />
 
         {/* LISTA */}
         <EnderecosRecentes
           ref={enderecosRecentesRef}
           loading={loading}
-          skeletonOpacity={
-            skeletonOpacity
-          }
-          listaEnderecos={
-            listaEnderecos
-          }
+          skeletonOpacity={skeletonOpacity}
+          listaEnderecos={listaEnderecos}
           onSelecionarEndereco={
             handleSelecionarEndereco
           }
@@ -577,11 +467,8 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: "row",
-    justifyContent:
-      "space-between",
-
+    justifyContent: "space-between",
     alignItems: "flex-start",
-
     marginTop: 30,
   },
 
