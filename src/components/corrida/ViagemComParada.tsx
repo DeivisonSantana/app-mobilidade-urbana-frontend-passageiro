@@ -100,7 +100,7 @@ export default function ViagemComParada({
 
   const inputRefs = useRef<TextInput[]>([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ["92%"], []);
+  const snapPoints = useMemo(() => ["40%"], []);
 
   const reorganizarOrders = (lista: EnderecoItem[]) => {
     return lista.map((item, index) => ({
