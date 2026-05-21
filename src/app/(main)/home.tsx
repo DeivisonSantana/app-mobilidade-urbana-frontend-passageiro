@@ -43,6 +43,12 @@ export default function Home() {
     setBottomSheetIndex(index);
   }, []);
 
+  // Handler para quando o usuário clica no botão + dentro do ParaOndeVamos
+  const handleAdicionarParada = useCallback(() => {
+    // Abre o componente ViagemComParada
+    setShowViagemComParada(true);
+  }, []);
+
   if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -63,8 +69,13 @@ export default function Home() {
         bottomSheetIndex={bottomSheetIndex}
       />
 
-      <FolhaInferior onSheetChange={handleSheetStateChange} />
+      {/* FolhaInferior agora recebe o handler para o botão + */}
+      <FolhaInferior 
+        onSheetChange={handleSheetStateChange}
+        onAdicionarParada={handleAdicionarParada}
+      />
 
+      {/* ViagemComParada visível apenas quando showViagemComParada for true */}
       <ViagemComParada
         visible={showViagemComParada}
         onClose={() => setShowViagemComParada(false)}

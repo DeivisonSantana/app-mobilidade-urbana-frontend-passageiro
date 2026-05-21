@@ -10,9 +10,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 // 🔹 Definição das props que o componente recebe
 interface props {
   onSheetChange: (index: number) => void;
+  onAdicionarParada?: () => void; // Nova prop para comunicar o clique do botão +
 }
 
-export default function FolhaInferior({ onSheetChange }: props) {
+export default function FolhaInferior({ onSheetChange, onAdicionarParada }: props) {
   // snap points do bottomsheet
   const snapPoints = useMemo(() => ["64%", "80%"], []);
   const sheetRef = useRef<BottomSheet>(null);
@@ -44,6 +45,16 @@ export default function FolhaInferior({ onSheetChange }: props) {
     ],
     [],
   );
+
+  // Handler para quando o usuário clica no botão + dentro do ParaOndeVamos
+  const handleAdicionarParada = useCallback(() => {
+    // Fecha o ParaOndeVamos
+    setShowParaOndeVamos(false);
+    // Propaga o evento para o componente pai (Home)
+    if (onAdicionarParada) {
+      onAdicionarParada();
+    }
+  }, [onAdicionarParada]);
 
   // render item da lista
   const renderItem = useCallback(
@@ -114,9 +125,11 @@ export default function FolhaInferior({ onSheetChange }: props) {
           />
         </BottomSheetView>
       </BottomSheet>
+      
       <ParaOndeVamos
         visible={showParaOndeVamos}
         onClose={() => setShowParaOndeVamos(false)}
+        onAdicionarParada={handleAdicionarParada} // Passa o handler para o ParaOndeVamos
       />
     </View>
   );

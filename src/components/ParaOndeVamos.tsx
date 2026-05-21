@@ -26,6 +26,7 @@ interface props {
   visible: boolean;
   onClose: () => void;
   duration?: number;
+  onAdicionarParada?: () => void; // Nova prop para comunicar o clique do botão +
 }
 
 interface EnderecoItem {
@@ -87,6 +88,7 @@ export default function ParaOndevamos({
   visible,
   onClose,
   duration = 300,
+  onAdicionarParada, // Recebe a nova prop
 }: props) {
   const translateX = useRef(new Animated.Value(width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -104,9 +106,14 @@ export default function ParaOndevamos({
 
   const inputRefs = useRef<TextInput[]>([]);
 
-  // Novo método associado ao botão "+" de adicionar parada
+  // Método associado ao botão "+" de adicionar parada
   const handleAdicionarParada = () => {
-    console.log("bateu no método");
+    // Fecha o componente ParaOndeVamos primeiro
+    onClose();
+    // Depois chama o callback para abrir o ViagemComParada
+    if (onAdicionarParada) {
+      onAdicionarParada();
+    }
   };
 
   useEffect(() => {
@@ -302,12 +309,12 @@ export default function ParaOndevamos({
   if (!isMounted) return null;
 
   return (
-    <View style={[StyleSheet.absoluteFill, { zIndex: 30 }]}>
+    <View style={[{ flex: 1, position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }, { zIndex: 30 }]}>
       {/* Overlay */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+      <Pressable style={[{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }]} onPress={onClose}>
         <Animated.View
           style={[
-            StyleSheet.absoluteFill,
+            { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
             {
               backgroundColor: "rgba(0,0,0,0.25)",
               opacity: overlayOpacity,
@@ -432,7 +439,6 @@ export default function ParaOndevamos({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   drawer: {
     position: "absolute",
