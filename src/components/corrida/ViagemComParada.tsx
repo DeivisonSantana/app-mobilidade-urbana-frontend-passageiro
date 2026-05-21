@@ -124,15 +124,20 @@ export default function ViagemComParada({
   };
 
   const adicionarParada = () => {
-    // Verifica se já atingiu o número máximo de paradas
-    const currentParadasCount = inputsIntinerario.length - 2; // Exclui origem e destino
-    if (currentParadasCount >= MAX_PARADAS) {
-      console.log("Número máximo de paradas atingido:", MAX_PARADAS);
+    // quantidade máxima total de inputs permitidos
+    const maxInputs = MAX_PARADAS + 1;
+
+    // se já atingiu o máximo, não adiciona
+    if (inputsIntinerario.length >= maxInputs) {
+      console.log("Número máximo de inputs atingido:", maxInputs);
       return;
     }
 
     setInputsIntinerario((prev) => {
       const novaLista = [...prev];
+
+      // transforma o destino atual em parada
+      // e adiciona um novo destino vazio no final
       novaLista.splice(novaLista.length - 1, 0, {
         name: "",
         formattedAddress: "",
@@ -141,8 +146,10 @@ export default function ViagemComParada({
         distancia: "0km",
         order: 0,
       });
+
       return reorganizarOrders(novaLista);
     });
+
     if (onAdicionarParada) {
       onAdicionarParada();
     }
@@ -232,10 +239,10 @@ export default function ViagemComParada({
           prev.map((item, index) =>
             index === 0
               ? {
-                  ...item,
-                  name: locationData.formattedAddress || "Localização Atual",
-                  formattedAddress: locationData.formattedAddress || "",
-                }
+                ...item,
+                name: locationData.formattedAddress || "Localização Atual",
+                formattedAddress: locationData.formattedAddress || "",
+              }
               : item,
           ),
         );
@@ -305,12 +312,12 @@ export default function ViagemComParada({
       prev.map((input, index) =>
         index === inputSelecionado
           ? {
-              ...input,
-              name: item.name,
-              formattedAddress: item.formattedAddress,
-              latitude: item.latitude,
-              longitude: item.longitude,
-            }
+            ...input,
+            name: item.name,
+            formattedAddress: item.formattedAddress,
+            latitude: item.latitude,
+            longitude: item.longitude,
+          }
           : input,
       ),
     );
@@ -374,7 +381,8 @@ export default function ViagemComParada({
   if (!isMounted) return null;
 
   // Verifica se pode adicionar mais paradas
-  const podeAdicionarParada = inputsIntinerario.length - 2 < MAX_PARADAS;
+  const podeAdicionarParada =
+    inputsIntinerario.length < MAX_PARADAS + 1;
 
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 30 }]}>
