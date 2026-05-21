@@ -1,6 +1,8 @@
+// app/_layout.tsx
 import MenuInferior from "@/components/MenuInferior";
 import SideMenu from "@/components/SideMenu";
 import { useAuth } from "@/context/AuthProvider";
+import { UiProvider, useUi } from "@/context/UiContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Slot, useRouter, useSegments } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -15,13 +17,15 @@ import {
   View,
 } from "react-native";
 
-export default function MainLayout() {
+// Componente interno que usa o UiContext
+function MainLayoutContent() {
   const { user } = useAuth();
+  const { isModalVisible } = useUi();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const drawerWidth = Math.round(Dimensions.get("window").width * 0.78);
   const translateX = useRef(new Animated.Value(-drawerWidth)).current;
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(translateX, {
       toValue: showSideMenu ? 0 : -drawerWidth,
       duration: 220,
@@ -29,9 +33,9 @@ export default function MainLayout() {
     }).start();
   }, [showSideMenu, drawerWidth, translateX]);
 
-  const closeMenu = React.useCallback(() => {
+  const closeMenu = () => {
     setShowSideMenu(false);
-  }, []);
+  };
 
   const handleMenuOpen = () => {
     setShowSideMenu(true);
@@ -68,42 +72,43 @@ export default function MainLayout() {
       router.push("/(payment)/pay");
       return;
     }
-
-    // Adicione outras rotas aqui no inferior
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerFloating}>
-        <View style={styles.headerContent}>
-          <View style={styles.userInfo}>
-            <Pressable onPress={handleMenuOpen} style={styles.avatarContainer}>
-              {user?.foto ? (
-                <Image
-                  source={{
-                    uri: user.foto,
-                  }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <View style={styles.avatar}>
-                  <Ionicons name="person-circle" size={40} color="#c4c4c4" />
-                </View>
-              )}
+      {/* Header condicional - só aparece se NÃO houver modal visível */}
+      {!isModalVisible && (
+        <View style={styles.headerFloating}>
+          <View style={styles.headerContent}>
+            <View style={styles.userInfo}>
+              <Pressable onPress={handleMenuOpen} style={styles.avatarContainer}>
+                {user?.foto ? (
+                  <Image
+                    source={{
+                      uri: user.foto,
+                    }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Ionicons name="person-circle" size={40} color="#c4c4c4" />
+                  </View>
+                )}
 
-              <View style={styles.notificationDot} />
+                <View style={styles.notificationDot} />
+              </Pressable>
+
+              <Text style={styles.greetingText}>
+                Olá, {user?.name?.split(" ")[0] || "Usuário"}!
+              </Text>
+            </View>
+
+            <Pressable style={styles.scanButton}>
+              <Ionicons name="scan-outline" size={28} color="#000" />
             </Pressable>
-
-            <Text style={styles.greetingText}>
-              Olá, {user?.name?.split(" ")[0] || "Usuário"}!
-            </Text>
           </View>
-
-          <Pressable style={styles.scanButton}>
-            <Ionicons name="scan-outline" size={28} color="#000" />
-          </Pressable>
         </View>
-      </View>
+      )}
 
       {showSideMenu && (
         <Pressable
@@ -122,6 +127,15 @@ export default function MainLayout() {
         onPressTab={handleTabPress}
       />
     </View>
+  );
+}
+
+// Componente principal
+export default function RootLayout() {
+  return (
+    <UiProvider>
+      <MainLayoutContent />
+    </UiProvider>
   );
 }
 
