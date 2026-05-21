@@ -100,7 +100,14 @@ export default function ViagemComParada({
 
   const inputRefs = useRef<TextInput[]>([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ["40%"], []);
+  
+  // Calcular snap point dinâmico baseado no número de inputs
+  const snapPoints = useMemo(() => {
+    const baseHeight = 48; // percentual base
+    const additionalHeight = (inputsIntinerario.length - 2) * 5; // 5% por parada adicional
+    const totalHeight = Math.min(baseHeight + additionalHeight, 85); // Máximo 85%
+    return [`${totalHeight}%`];
+  }, [inputsIntinerario.length]);
 
   const reorganizarOrders = (lista: EnderecoItem[]) => {
     return lista.map((item, index) => ({
@@ -125,6 +132,11 @@ export default function ViagemComParada({
     if (onAdicionarParada) {
       onAdicionarParada();
     }
+    
+    // Ajustar o snap point após adicionar parada
+    setTimeout(() => {
+      bottomSheetRef.current?.snapToIndex(0);
+    }, 50);
   };
 
   const removerParada = (index: number) => {
@@ -135,6 +147,11 @@ export default function ViagemComParada({
       const novaLista = prev.filter((_, i) => i !== index);
       return reorganizarOrders(novaLista);
     });
+    
+    // Ajustar o snap point após remover parada
+    setTimeout(() => {
+      bottomSheetRef.current?.snapToIndex(0);
+    }, 50);
   };
 
   const moverParaCima = (index: number) => {
@@ -167,6 +184,10 @@ export default function ViagemComParada({
     setInputsIntinerario((prev) =>
       prev.map((item, i) => (i === index ? { ...item, name: texto } : item)),
     );
+  };
+
+  const handleConfirmar = () => {
+    console.log("Rota confirmada:", inputsIntinerario);
   };
 
   useEffect(() => {
@@ -320,11 +341,7 @@ export default function ViagemComParada({
         toValue: 1,
         duration: duration * 0.8,
         useNativeDriver: true,
-      }).start(() => {
-        setTimeout(() => {
-          inputRefs.current[1]?.focus();
-        }, 100);
-      });
+      }).start();
 
       bottomSheetRef.current?.snapToIndex(0);
     } else {
@@ -351,8 +368,6 @@ export default function ViagemComParada({
   }, [onClose]);
 
   if (!isMounted) return null;
-
-  const temParadas = inputsIntinerario.length >= 3;
 
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 30 }]}>
@@ -392,7 +407,7 @@ export default function ViagemComParada({
           <View style={{ padding: 10 }} />
 
           {/* Título */}
-          <Text style={styles.title}>Para onde vamos?</Text>
+          <Text style={styles.title}>Adicionar paradas</Text>
 
           {/* INPUTS DINÂMICOS */}
           <View style={styles.searchContainer}>
@@ -400,6 +415,8 @@ export default function ViagemComParada({
               const isOrigem = index === 0;
               const isDestino = index === inputsIntinerario.length - 1;
               const isParada = !isOrigem && !isDestino;
+              // Número da parada (começa do 1 para a primeira parada)
+              const paradaNumber = isParada ? index : null;
 
               return (
                 <View key={index} style={styles.rowContainer}>
@@ -410,29 +427,13 @@ export default function ViagemComParada({
                         <View style={styles.startOuterCircle}>
                           <View style={styles.startInnerCircle} />
                         </View>
-                      ) : isDestino && !temParadas ? (
-                        <View style={styles.startOuterSquare}>
-                          <View style={styles.startInnerSquare} />
+                      ) : isParada ? (
+                        <View style={styles.numberBox}>
+                          <Text style={styles.numberText}>{paradaNumber}</Text>
                         </View>
                       ) : (
-                        <View
-                          style={[
-                            styles.numberBox,
-                            isDestino && temParadas
-                              ? styles.lastNumberBoxHighlight
-                              : null,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.numberText,
-                              isDestino && temParadas
-                                ? styles.lastNumberTextHighlight
-                                : null,
-                            ]}
-                          >
-                            {index}
-                          </Text>
+                        <View style={styles.startOuterSquare}>
+                          <View style={styles.startInnerSquare} />
                         </View>
                       )}
                     </View>
@@ -458,10 +459,8 @@ export default function ViagemComParada({
                         isOrigem
                           ? "Local de partida"
                           : isDestino
-                          ? temParadas
-                            ? "Destino"
-                            : "Para onde você vai?"
-                          : "Parada"
+                          ? "Destino"
+                          : "Adicionar parada"
                       }
                       placeholderTextColor="#999"
                       value={item.name}
@@ -554,6 +553,17 @@ export default function ViagemComParada({
               />
             </View>
           )}
+
+          {/* BOTÃO CONFIRMAR */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleConfirmar}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.confirmButtonText}>Confirmar</Text>
+            </TouchableOpacity>
+          </View>
         </BottomSheetView>
       </BottomSheet>
     </View>
@@ -657,12 +667,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#333",
   },
-  lastNumberBoxHighlight: {
-    backgroundColor: "#FF5500",
-  },
-  lastNumberTextHighlight: {
-    color: "#FFF",
-  },
   verticalLine: {
     position: "absolute",
     width: 2,
@@ -716,6 +720,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
     paddingTop: 16,
+    maxHeight: 200,
   },
   suggestionItem: {
     flexDirection: "row",
@@ -746,5 +751,23 @@ const styles = StyleSheet.create({
     height: 60,
     backgroundColor: "#E0E0E0",
     borderRadius: 8,
+  },
+  buttonContainer: {
+    marginTop: 24,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  confirmButton: {
+    backgroundColor: "#FFD200",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  confirmButtonText: {
+    color: "#000",
+    fontSize: 18,
+    fontWeight: "700",
   },
 });
