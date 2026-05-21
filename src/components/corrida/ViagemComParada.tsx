@@ -18,6 +18,7 @@ import { api } from "../../Services/api";
 
 const { width, height } = Dimensions.get("window");
 const CACHE_KEY = "@last_user_location";
+const MAX_PARADAS = 4; // Número máximo de paradas (excluindo origem e destino)
 
 interface props {
   visible: boolean;
@@ -116,7 +117,20 @@ export default function ViagemComParada({
     }));
   };
 
+  // Método chamado ao clicar no input
+  const handleInputClick = (index: number) => {
+    console.log("bateu");
+    setInputSelecionado(index);
+  };
+
   const adicionarParada = () => {
+    // Verifica se já atingiu o número máximo de paradas
+    const currentParadasCount = inputsIntinerario.length - 2; // Exclui origem e destino
+    if (currentParadasCount >= MAX_PARADAS) {
+      console.log("Número máximo de paradas atingido:", MAX_PARADAS);
+      return;
+    }
+
     setInputsIntinerario((prev) => {
       const novaLista = [...prev];
       novaLista.splice(novaLista.length - 1, 0, {
@@ -359,6 +373,9 @@ export default function ViagemComParada({
 
   if (!isMounted) return null;
 
+  // Verifica se pode adicionar mais paradas
+  const podeAdicionarParada = inputsIntinerario.length - 2 < MAX_PARADAS;
+
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 30 }]}>
       {/* Overlay */}
@@ -415,7 +432,7 @@ export default function ViagemComParada({
                         <View style={styles.startOuterCircle}>
                           <View style={styles.startInnerCircle} />
                         </View>
-                      ): (
+                      ) : (
                         <View
                           style={[
                             styles.numberBox,
@@ -448,31 +465,23 @@ export default function ViagemComParada({
                       isDestino && styles.searchInputDestination,
                     ]}
                   >
-                    <TextInput
-                      ref={(ref) => {
-                        if (ref) {
-                          inputRefs.current[index] = ref;
-                        }
-                      }}
-                      style={styles.input}
-                      placeholder={
-                       'Adicionar parada'
-                      }
-                      placeholderTextColor="#999"
-                      value={item.name}
-                      onFocus={() => setInputSelecionado(index)}
-                      onChangeText={(texto) => {
-                        setInputsIntinerario((prev) =>
-                          prev.map((inp, idx) =>
-                            idx === index
-                              ? { ...inp, name: texto, formattedAddress: "" }
-                              : inp,
-                          ),
-                        );
-                      }}
-                    />
+                    <TouchableOpacity
+                      style={styles.inputTouchable}
+                      onPress={() => handleInputClick(index)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.inputText,
+                          !item.name && styles.placeholderText
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.name || 'Adicionar parada'}
+                      </Text>
+                    </TouchableOpacity>
 
-                    {isDestino && (
+                    {isDestino && podeAdicionarParada && (
                       <TouchableOpacity
                         onPress={adicionarParada}
                         style={styles.addButtonInline}
@@ -688,13 +697,18 @@ const styles = StyleSheet.create({
   searchInputDestination: {
     borderBottomColor: "#FFD7BF",
   },
-  input: {
+  inputTouchable: {
     flex: 1,
-    marginLeft: 10,
+    paddingVertical: 12,
+  },
+  inputText: {
     fontSize: 17,
     color: "#111",
     fontWeight: "500",
-    paddingRight: 10,
+  },
+  placeholderText: {
+    color: "#999",
+    fontWeight: "400",
   },
   addButtonInline: {
     width: 32,
