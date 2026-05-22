@@ -147,17 +147,30 @@ export default function ViagemComParada({
     setInputsIntinerario((prev) => {
       const novaLista = [...prev];
 
+      const ultimoIndex = novaLista.length - 1;
+
+      const ultimoDestino = {
+        ...novaLista[ultimoIndex],
+      };
+
+      // novo input vazio que será o novo destino
+      const novoDestinoVazio: EnderecoItem = {
+        name: "",
+        formattedAddress: "",
+        latitude: 0,
+        longitude: 0,
+        distancia: "0km",
+        order: 0,
+      };
+
+      // substitui o último pelo novo destino vazio
+      novaLista[ultimoIndex] = novoDestinoVazio;
+
+      // adiciona a parada antes do destino
       novaLista.splice(
-        novaLista.length - 1,
+        ultimoIndex,
         0,
-        {
-          name: "",
-          formattedAddress: "",
-          latitude: 0,
-          longitude: 0,
-          distancia: "0km",
-          order: 0,
-        },
+        ultimoDestino,
       );
 
       return reorganizarOrders(novaLista);

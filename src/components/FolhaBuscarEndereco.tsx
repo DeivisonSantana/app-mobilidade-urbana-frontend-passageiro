@@ -166,6 +166,13 @@ export default function FolhaBuscarEndereco({
   }, [visible]);
 
   useEffect(() => {
+    if (visible) {
+      setEndereco("");
+      setListaEnderecos([]);
+    }
+  }, [visible]);
+
+  useEffect(() => {
     let animationLoop:
       | Animated.CompositeAnimation
       | null = null;
