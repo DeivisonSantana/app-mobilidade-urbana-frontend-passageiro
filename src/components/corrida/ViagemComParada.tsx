@@ -381,15 +381,6 @@ export default function ViagemComParada({
                       </Text>
                     </TouchableOpacity>
 
-                    {isDestino && podeAdicionarParada && (
-                      <TouchableOpacity
-                        onPress={adicionarParada}
-                        style={styles.addButtonInline}
-                      >
-                        <Ionicons name="add" size={20} color="#666" />
-                      </TouchableOpacity>
-                    )}
-
                     {(isParada || mostrarAcoesDestinoFinal) && (
                       <View style={styles.actionButtons}>
                         <TouchableOpacity
