@@ -390,6 +390,7 @@ export default function ViagemComParada({
         visible={showFolhaBuscarEndereco}
         onClose={() => setShowFolhaBuscarEndereco(false)}
         onSheetChange={handleSheetStateChange}
+        servico={'corrida'}
       />
     </View>
   );
