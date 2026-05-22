@@ -574,17 +574,15 @@ export default function FolhaBuscarEndereco({
               <BottomSheetFlatList
                 data={listaExibicao}
                 keyExtractor={(
-                  item,
-                  index,
+                  item: EnderecoItem,
+                  index: number,
                 ) =>
                   `${item.formattedAddress}-${index}`
                 }
                 renderItem={renderEnderecoItem}
                 ListHeaderComponent={ListHeader}
                 ListFooterComponent={ListFooter}
-                showsVerticalScrollIndicator={
-                  false
-                }
+                showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               />
             )}

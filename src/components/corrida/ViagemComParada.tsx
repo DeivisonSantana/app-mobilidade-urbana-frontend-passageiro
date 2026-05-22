@@ -79,6 +79,9 @@ export default function ViagemComParada({
 
   const handleSheetStateChange = useCallback((index: number) => {
     console.log(index, "index handleSheetStateChange");
+    if (index === -1) {
+      setShowFolhaBuscarEndereco(false)
+    }
   }, []);
 
   const reorganizarOrders = (lista: EnderecoItem[]) => {
@@ -182,10 +185,10 @@ export default function ViagemComParada({
           prev.map((item, index) =>
             index === 0
               ? {
-                  ...item,
-                  name: locationData.formattedAddress || "Localização Atual",
-                  formattedAddress: locationData.formattedAddress || "",
-                }
+                ...item,
+                name: locationData.formattedAddress || "Localização Atual",
+                formattedAddress: locationData.formattedAddress || "",
+              }
               : item,
           ),
         );
