@@ -75,7 +75,7 @@ export default function FolhaBuscarEndereco({
   onSheetChange,
   servico,
 }: Props) {
-  const snapPoints = useMemo(() => ["89%"], []);
+  const snapPoints = useMemo(() => ["89"], []);
 
   const sheetRef = useRef<BottomSheet>(null);
 
@@ -531,6 +531,10 @@ export default function FolhaBuscarEndereco({
             width: 40,
           }}
           enableOverDrag={false}
+          // ⭐ ADICIONE ESTAS PROPRIEDADES:
+          keyboardBehavior="interactive"  // ou "extend" - veja explicação abaixo
+          keyboardBlurBehavior="restore"   // restaura o scroll quando teclado fechar
+          android_keyboardInputMode="adjustResize"  // específico para Android
         >
           <>
             <View style={styles.searchHeader}>
