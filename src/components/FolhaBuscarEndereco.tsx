@@ -79,17 +79,32 @@ export default function FolhaBuscarEndereco({
 
   const sheetRef = useRef<BottomSheet>(null);
 
+  const inputRef = useRef<any>(null);
+
   const skeletonOpacity = useRef(new Animated.Value(0.4)).current;
 
-  const [showDetalhesEntrega, setShowDetalhesEntrega] = useState(false);
+  const [showDetalhesEntrega, setShowDetalhesEntrega] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
 
-  const [historicoCache, setHistoricoCache] = useState<EnderecoItem[]>([]);
+  const [historicoCache, setHistoricoCache] =
+    useState<EnderecoItem[]>([]);
 
-  const [listaEnderecos, setListaEnderecos] = useState<EnderecoItem[]>([]);
+  const [listaEnderecos, setListaEnderecos] =
+    useState<EnderecoItem[]>([]);
 
   const [endereco, setEndereco] = useState("");
+
+  useEffect(() => {
+    if (visible) {
+      const timeout = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 350);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [visible]);
 
   const carregarHistoricoCache = async () => {
     try {
@@ -531,10 +546,9 @@ export default function FolhaBuscarEndereco({
             width: 40,
           }}
           enableOverDrag={false}
-          // ⭐ ADICIONE ESTAS PROPRIEDADES:
-          keyboardBehavior="interactive"  // ou "extend" - veja explicação abaixo
-          keyboardBlurBehavior="restore"   // restaura o scroll quando teclado fechar
-          android_keyboardInputMode="adjustResize"  // específico para Android
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          android_keyboardInputMode="adjustResize"
         >
           <>
             <View style={styles.searchHeader}>
@@ -547,6 +561,7 @@ export default function FolhaBuscarEndereco({
                 />
 
                 <BottomSheetTextInput
+                  ref={inputRef}
                   style={styles.input}
                   placeholder="Endereço"
                   placeholderTextColor="#CCC"
@@ -596,7 +611,6 @@ export default function FolhaBuscarEndereco({
     </>
   );
 }
-
 const styles = StyleSheet.create({
   searchHeader: {
     flexDirection: "row",
