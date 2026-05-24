@@ -203,9 +203,35 @@ export default function Home() {
 
   const handleCloseViagemComParada =
     useCallback(() => {
-      setShowViagemComParada(
-        false,
-      );
+      setShowViagemComParada(false);
+
+      // 🔥 limpa rota do mapa
+      // 🔥 limpa rota mas mantém origem
+      setItinerario((prev) => [
+        prev[0],
+        {
+          name: "",
+          formattedAddress: "",
+          latitude: 0,
+          longitude: 0,
+          distancia: "0km",
+          order: 1,
+        },
+      ]);
+
+      // 🔥 centraliza novamente no usuário
+      if (userInitialRegion.current) {
+        const offsetLatitude = 0.0064;
+
+        setRegion({
+          ...userInitialRegion.current,
+          latitude:
+            userInitialRegion.current.latitude -
+            offsetLatitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
+      }
     }, []);
 
   // 🔥 lista operacional do mapa
