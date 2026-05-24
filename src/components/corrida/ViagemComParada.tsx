@@ -240,7 +240,7 @@ export default function ViagemComParada({
 
   useEffect(() => {
     const padding =
-      320 + itinerario.length * 40;
+      360 + itinerario.length * 45;
 
     onMapPaddingChange?.(
       padding,
