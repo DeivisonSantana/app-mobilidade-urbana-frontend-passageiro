@@ -19,11 +19,11 @@ import {
 
 import MapView, {
   Marker,
-  Polyline,
   Region,
   UserLocationChangeEvent,
 } from "react-native-maps";
 
+import MapViewDirections from "react-native-maps-directions";
 interface EnderecoItem {
   name: string;
   formattedAddress: string;
@@ -187,15 +187,15 @@ export default function Map({
           formattedAddress = rua
             ? `${rua}${numero}`
             : address.district ||
-              "Minha Localização";
+            "Minha Localização";
         }
 
         const updatedRegionWithAddress =
-          {
-            ...currentRegion,
-            formattedAddress:
-              formattedAddress,
-          };
+        {
+          ...currentRegion,
+          formattedAddress:
+            formattedAddress,
+        };
 
         await AsyncStorage.setItem(
           CACHE_KEY,
@@ -245,18 +245,18 @@ export default function Map({
             JSON.parse(cached);
 
           const cachedRegion: Region =
-            {
-              latitude:
-                location.latitude -
-                OFFSET_LATITUDE,
+          {
+            latitude:
+              location.latitude -
+              OFFSET_LATITUDE,
 
-              longitude:
-                location.longitude,
+            longitude:
+              location.longitude,
 
-              latitudeDelta: 0.01,
+            latitudeDelta: 0.01,
 
-              longitudeDelta: 0.01,
-            };
+            longitudeDelta: 0.01,
+          };
 
           setUserLocation(
             cachedRegion,
@@ -275,7 +275,7 @@ export default function Map({
             onUserLocationFound(
               location,
               location.formattedAddress ||
-                "Localização Atual",
+              "Localização Atual",
             );
           }
 
@@ -359,35 +359,35 @@ export default function Map({
                     return;
 
                   const userRegion: Region =
-                    {
-                      latitude:
-                        location.coords
-                          .latitude -
-                        OFFSET_LATITUDE,
+                  {
+                    latitude:
+                      location.coords
+                        .latitude -
+                      OFFSET_LATITUDE,
 
-                      longitude:
-                        location.coords
-                          .longitude,
+                    longitude:
+                      location.coords
+                        .longitude,
 
-                      latitudeDelta: 0.01,
+                    latitudeDelta: 0.01,
 
-                      longitudeDelta: 0.01,
-                    };
+                    longitudeDelta: 0.01,
+                  };
 
                   const originalRegion =
-                    {
-                      latitude:
-                        location.coords
-                          .latitude,
+                  {
+                    latitude:
+                      location.coords
+                        .latitude,
 
-                      longitude:
-                        location.coords
-                          .longitude,
+                    longitude:
+                      location.coords
+                        .longitude,
 
-                      latitudeDelta: 0.01,
+                    latitudeDelta: 0.01,
 
-                      longitudeDelta: 0.01,
-                    };
+                    longitudeDelta: 0.01,
+                  };
 
                   if (
                     !userInitialRegion.current
@@ -536,15 +536,15 @@ export default function Map({
         mapRef.current
       ) {
         const regionWithOffset =
-          {
-            ...userInitialRegion.current,
+        {
+          ...userInitialRegion.current,
 
-            latitude:
-              userInitialRegion
-                .current
-                .latitude -
-              OFFSET_LATITUDE,
-          };
+          latitude:
+            userInitialRegion
+              .current
+              .latitude -
+            OFFSET_LATITUDE,
+        };
 
         mapRef.current.animateToRegion(
           regionWithOffset,
@@ -647,7 +647,7 @@ export default function Map({
   useEffect(() => {
     if (
       bottomSheetIndex ===
-        undefined ||
+      undefined ||
       !userInitialRegion.current
     )
       return;
@@ -665,20 +665,20 @@ export default function Map({
         0.055;
 
       const newRegion: Region =
-        {
-          ...userInitialRegion.current,
+      {
+        ...userInitialRegion.current,
 
-          latitude:
-            userInitialRegion
-              .current.latitude -
-            largerOffset,
+        latitude:
+          userInitialRegion
+            .current.latitude -
+          largerOffset,
 
-          latitudeDelta:
-            zoomedLatitudeDelta,
+        latitudeDelta:
+          zoomedLatitudeDelta,
 
-          longitudeDelta:
-            zoomedLongitudeDelta,
-        };
+        longitudeDelta:
+          zoomedLongitudeDelta,
+      };
 
       if (mapRef.current) {
         mapRef.current.animateToRegion(
@@ -693,26 +693,26 @@ export default function Map({
       mapAdjusted
     ) {
       const initialRegion: Region =
-        {
-          ...userInitialRegion.current,
+      {
+        ...userInitialRegion.current,
 
-          latitude:
-            userInitialRegion
-              .current.latitude -
-            OFFSET_LATITUDE,
+        latitude:
+          userInitialRegion
+            .current.latitude -
+          OFFSET_LATITUDE,
 
-          latitudeDelta:
-            userInitialRegion
-              .current
-              .latitudeDelta ??
-            0.01,
+        latitudeDelta:
+          userInitialRegion
+            .current
+            .latitudeDelta ??
+          0.01,
 
-          longitudeDelta:
-            userInitialRegion
-              .current
-              .longitudeDelta ??
-            0.01,
-        };
+        longitudeDelta:
+          userInitialRegion
+            .current
+            .longitudeDelta ??
+          0.01,
+      };
 
       if (mapRef.current) {
         mapRef.current.animateToRegion(
@@ -822,19 +822,36 @@ export default function Map({
         )}
 
         {/* 🔥 POLYLINE */}
-        {itinerario.length >=
-          2 && (
-          <Polyline
-            coordinates={itinerario.map(
-              (item) => ({
-                latitude:
-                  item.latitude,
-                longitude:
-                  item.longitude,
-              }),
-            )}
+        {/* 🔥 ROTA REAL */}
+        {itinerario.length >= 2 && (
+          <MapViewDirections
+            origin={{
+              latitude: itinerario[0].latitude,
+              longitude: itinerario[0].longitude,
+            }}
+            destination={{
+              latitude:
+                itinerario[
+                  itinerario.length - 1
+                ].latitude,
+              longitude:
+                itinerario[
+                  itinerario.length - 1
+                ].longitude,
+            }}
+            waypoints={itinerario
+              .slice(1, -1)
+              .map((item) => ({
+                latitude: item.latitude,
+                longitude: item.longitude,
+              }))}
+            apikey={
+              process.env
+                .EXPO_PUBLIC_GOOGLE_MAPS_API_KEY as string
+            }
             strokeWidth={4}
             strokeColor="#111827"
+            optimizeWaypoints={true}
           />
         )}
       </MapView>
@@ -878,7 +895,7 @@ export default function Map({
           size={24}
           color={
             isLoading &&
-            !userLocation
+              !userLocation
               ? "#ccc"
               : "#007AFF"
           }

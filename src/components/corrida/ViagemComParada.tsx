@@ -71,7 +71,7 @@ export default function ViagemComParada({
     useRef<BottomSheet>(null);
 
   const snapPoints = useMemo(() => {
-    const baseHeight = 48;
+    const baseHeight = 40;
 
     const additionalHeight =
       (itinerario.length - 2) * 5;
@@ -313,33 +313,11 @@ export default function ViagemComParada({
             styles.contentContainer
           }
         >
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={
-                styles.backButton
-              }
-            >
-              <Ionicons
-                name="chevron-back"
-                size={24}
-                color="black"
-              />
-            </TouchableOpacity>
-
-            <View
-              style={{ width: 24 }}
-            />
+          <View style={styles.containerTitle}>
+            <Text style={styles.title}>
+              Adicionar paradas
+            </Text>
           </View>
-
-          <View
-            style={{ padding: 10 }}
-          />
-
-          <Text style={styles.title}>
-            Adicionar paradas
-          </Text>
-
           <View
             style={
               styles.searchContainer
@@ -540,11 +518,14 @@ export default function ViagemComParada({
           handleSelecionarEndereco
         }
       />
-    </View>
+    </View >
   );
 }
 
 const styles = StyleSheet.create({
+  containerTitle: {
+    alignItems: "center",
+  },
   bottomSheetBackground: {
     backgroundColor: "#FFF",
     borderTopLeftRadius: 24,
@@ -574,10 +555,10 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: "700",
     color: "#000",
-    marginBottom: 28,
+    marginBottom: 6,
   },
 
   searchContainer: {
