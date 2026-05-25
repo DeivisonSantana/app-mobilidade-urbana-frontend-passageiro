@@ -120,39 +120,63 @@ export default function Map({
   // 🔥 NOVO
   // renderiza rota automaticamente
   useEffect(() => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    // 🔥 se existir apenas origem
+    // volta pro usuário
     if (
-      !mapRef.current ||
-      itinerario.length === 0
+      itinerario.length <= 1 &&
+      userInitialRegion.current
     ) {
-      return;
-    }
+      const offsetLatitude =
+        0.0064;
 
-    // 🔥 evita animar com apenas origem
-    if (itinerario.length < 2) {
-      return;
-    }
-
-    const coordinates =
-      itinerario.map((item) => ({
-        latitude: item.latitude,
-        longitude: item.longitude,
-      }));
-
-    setTimeout(() => {
-      mapRef.current?.fitToCoordinates(
-        coordinates,
+      mapRef.current.animateToRegion(
         {
-          edgePadding: {
-            top: 180,
-            right: 60,
-            bottom: mapBottomPadding,
-            left: 60,
-          },
-          animated: true,
+          ...userInitialRegion.current,
+          latitude:
+            userInitialRegion.current
+              .latitude -
+            offsetLatitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
         },
+        800,
       );
-    }, 300);
-  }, [itinerario]);
+
+      return;
+    }
+
+    // 🔥 rota normal
+    if (itinerario.length >= 2) {
+      const coordinates =
+        itinerario.map((item) => ({
+          latitude: item.latitude,
+          longitude: item.longitude,
+        }));
+
+      setTimeout(() => {
+        mapRef.current?.fitToCoordinates(
+          coordinates,
+          {
+            edgePadding: {
+              top: 180,
+              right: 60,
+              bottom:
+                mapBottomPadding,
+              left: 60,
+            },
+            animated: true,
+          },
+        );
+      }, 300);
+    }
+  }, [
+    itinerario,
+    mapBottomPadding,
+  ]);
 
   // 🗺️ Executa em paralelo
   const fetchAddressInBackground =
