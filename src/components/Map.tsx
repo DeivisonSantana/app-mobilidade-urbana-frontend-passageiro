@@ -511,7 +511,7 @@ export default function Map({
 
           return (
             <Marker
-              anchor={{ x: 0.5, y: 0.95 }}
+             anchor={{ x: 0.5, y: 1 }}
               key={`${item.latitude}-${item.longitude}-${index}`}
               coordinate={{
                 latitude: item.latitude,
@@ -532,8 +532,19 @@ export default function Map({
                     <Text style={styles.stopMarkerText}>{index}</Text>
                   </View>
 
-                  {/* 🔥 ponta inferior */}
-                  <View style={styles.stopMarkerPointer} />
+                  {/* 🔥 haste */}
+                  <View
+                    style={
+                      styles.stopMarkerLine
+                    }
+                  />
+
+                  {/* 🔥 base */}
+                  <View
+                    style={
+                      styles.stopMarkerBase
+                    }
+                  />
                 </View>
               )}
             </Marker>
@@ -559,7 +570,7 @@ export default function Map({
             apikey={process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY as string}
             strokeWidth={4}
             strokeColor="#2563EB"
-            // optimizeWaypoints={true}
+          // optimizeWaypoints={true}
           />
         )}
       </MapView>
@@ -618,6 +629,12 @@ const styles = StyleSheet.create({
 
   stopMarkerContainer: {
     alignItems: "center",
+
+    height: 52,
+
+    width: 32,
+
+    justifyContent: "flex-start",
   },
 
   stopMarker: {
@@ -651,24 +668,28 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  stopMarkerPointer: {
-    width: 0,
+  stopMarkerLine: {
+    width: 2,
 
-    height: 0,
+    height: 12,
 
-    borderLeftWidth: 6,
+    backgroundColor: "#000",
 
-    borderRightWidth: 6,
+    marginTop: -1,
+  },
 
-    borderTopWidth: 10,
+  stopMarkerBase: {
+    width: 8,
 
-    borderLeftColor: "transparent",
+    height: 8,
 
-    borderRightColor: "transparent",
+    borderRadius: 4,
 
-    borderTopColor: "#2563EB",
+    backgroundColor: "#FF3B30",
 
-    marginTop: -2,
+    borderWidth: 1.5,
+
+    borderColor: "#FFF",
   },
 
   stopMarkerText: {
