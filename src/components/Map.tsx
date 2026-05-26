@@ -650,6 +650,7 @@ const styles = StyleSheet.create({
   stopWrapper: {
     alignItems: "center",
     justifyContent: "center",
+    padding: 10,
   },
 
   stopCircle: {
@@ -695,10 +696,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     position: "relative",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 6,
@@ -716,8 +714,7 @@ const styles = StyleSheet.create({
   speechBubbleArrow: {
     position: "absolute",
     bottom: -7,
-    left: "0.5%",
-    marginLeft: 0,
+    alignSelf: "center",
     width: 0,
     height: 0,
     borderLeftWidth: 12,
@@ -728,7 +725,6 @@ const styles = StyleSheet.create({
     borderRightColor: "transparent",
     borderTopColor: "#FFFFFF",
   },
-
   errorContainer: {
     ...StyleSheet.absoluteFillObject,
 
