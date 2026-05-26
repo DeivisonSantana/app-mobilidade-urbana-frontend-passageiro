@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import MapView, {
+  Callout,
   Marker,
   Region,
   UserLocationChangeEvent,
@@ -505,46 +506,39 @@ export default function Map({
         mapType="standard"
         onMapReady={() => setIsMapReady(true)}
       >
-        {/* 🔥 MARKERS */}
+        {/* 🔥 MARKERS COM NOVO DESIGN CORRIGIDO */}
         {itinerario.map((item, index) => {
           const isOrigem = index === 0;
 
           return (
             <Marker
-             anchor={{ x: 0.5, y: 1 }}
+              anchor={{ x: 0.5, y: 0.3 }}
               key={`${item.latitude}-${item.longitude}-${index}`}
               coordinate={{
                 latitude: item.latitude,
                 longitude: item.longitude,
               }}
-              title={item.name}
-              description={item.formattedAddress}
             >
-              {/* 🔥 ORIGEM */}
+              {/* 🔥 ORIGEM - mantém o design anterior */}
               {isOrigem ? (
                 <View style={styles.originMarker}>
                   <View style={styles.originMarkerInner} />
                 </View>
               ) : (
-                /* 🔥 PARADAS */
-                <View style={styles.stopMarkerContainer}>
-                  <View style={styles.stopMarker}>
-                    <Text style={styles.stopMarkerText}>{index}</Text>
+                /* 🔥 NOVO DESIGN DE PARADA CORRIGIDO - Bolinha com borda amarelada */
+                <View style={styles.stopWrapper}>
+                  {/* Bolinha com borda branca/amarelada */}
+                  <View style={styles.stopCircle}>
+                    <View style={styles.stopNumber} />
                   </View>
 
-                  {/* 🔥 haste */}
-                  <View
-                    style={
-                      styles.stopMarkerLine
-                    }
-                  />
-
-                  {/* 🔥 base */}
-                  <View
-                    style={
-                      styles.stopMarkerBase
-                    }
-                  />
+                  {/* Balão de texto - AGORA COMO CALLOUT para não cortar */}
+                  <Callout tooltip={true} style={styles.calloutContainer}>
+                    <View style={styles.speechBubble}>
+                      <Text style={styles.speechBubbleText}>{item.name}</Text>
+                      <View style={styles.speechBubbleArrow} />
+                    </View>
+                  </Callout>
                 </View>
               )}
             </Marker>
@@ -570,7 +564,7 @@ export default function Map({
             apikey={process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY as string}
             strokeWidth={4}
             strokeColor="#2563EB"
-          // optimizeWaypoints={true}
+            // optimizeWaypoints={true}
           />
         )}
       </MapView>
@@ -627,78 +621,88 @@ const styles = StyleSheet.create({
     backgroundColor: "#111827",
   },
 
-  stopMarkerContainer: {
+  // 🔥 NOVO DESIGN CORRIGIDO - Bolinha com borda amarelada
+  stopWrapper: {
     alignItems: "center",
-
-    height: 52,
-
-    width: 32,
-
-    justifyContent: "flex-start",
+    justifyContent: "center",
   },
 
-  stopMarker: {
-    width: 30,
+  stopCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
 
-    height: 30,
-
-    borderRadius: 15,
-
-    backgroundColor: "#2563EB",
+    backgroundColor: "#FFFFFF",
 
     justifyContent: "center",
-
     alignItems: "center",
 
-    borderWidth: 2,
-
-    borderColor: "#FFF",
-
     shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
 
+  stopNumber: {
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
+
+    backgroundColor: "#F6C400",
+
+    overflow: "hidden",
+  },
+
+  calloutContainer: {
+    width: 200,
+    backgroundColor: "transparent",
+  },
+
+  speechBubble: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    position: "relative",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
-
     shadowOpacity: 0.2,
-
     shadowRadius: 4,
-
-    elevation: 4,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
 
-  stopMarkerLine: {
-    width: 2,
-
-    height: 12,
-
-    backgroundColor: "#000",
-
-    marginTop: -1,
-  },
-
-  stopMarkerBase: {
-    width: 8,
-
-    height: 8,
-
-    borderRadius: 4,
-
-    backgroundColor: "#FF3B30",
-
-    borderWidth: 1.5,
-
-    borderColor: "#FFF",
-  },
-
-  stopMarkerText: {
-    color: "#FFF",
-
+  speechBubbleText: {
     fontSize: 13,
-
-    fontWeight: "700",
+    color: "#1F2937",
+    fontWeight: "600",
+    textAlign: "center",
   },
+
+  speechBubbleArrow: {
+    position: "absolute",
+    bottom: -8,
+    left: "50%",
+    marginLeft: -8,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderStyle: "solid",
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: "#FFFFFF",
+  },
+
   errorContainer: {
     ...StyleSheet.absoluteFillObject,
 
