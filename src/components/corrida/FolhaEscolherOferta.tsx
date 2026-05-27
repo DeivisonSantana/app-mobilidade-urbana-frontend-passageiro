@@ -537,10 +537,8 @@ const styles = StyleSheet.create({
   },
 
   cartaoContainer: {
-    marginTop: 8,
-    paddingVertical: 18,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
+    marginTop: 2,
+    paddingVertical: 6,
     borderColor: "#ececec",
     flexDirection: "row",
     alignItems: "center",
