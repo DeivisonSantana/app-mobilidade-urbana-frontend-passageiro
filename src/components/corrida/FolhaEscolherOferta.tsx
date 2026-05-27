@@ -259,17 +259,24 @@ export default function FolhaEscolherOferta({
 
             <View style={{ flex: 1 }}>
               <View style={styles.titleRow}>
-                <Text style={styles.titulo}>{item.titulo}</Text>
+                {/* ESTILO CONDICIONAL: fontWeight 500 apenas para itens negociáveis */}
+                <Text style={[styles.titulo, isNegociavel && styles.tituloNegociavel]}>
+                  {item.titulo}
+                </Text>
 
                 {item.negociavel && (
                   <MaterialCommunityIcons
-                    name="account-group"
+                    name="account"
                     size={14}
                     color="#111"
                     style={{ marginLeft: 4 }}
                   />
                 )}
-
+                <View>
+                  <Text>
+                    4
+                  </Text>
+                </View>
                 <View style={styles.infoDot} />
               </View>
 
@@ -409,6 +416,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "400",
     color: "#111",
+  },
+
+  // Estilo específico para títulos de itens negociáveis (Negocia e Moto Negocia)
+  tituloNegociavel: {
+    fontWeight: "500",
   },
 
   subtitulo: {
