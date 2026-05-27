@@ -324,7 +324,9 @@ export default function FolhaEscolherOferta({
             ) : (
               <>
                 <Text style={styles.preco}>
-                  {item.titulo === "Táxi" ? "aprox. " : ""}
+                  {item.titulo === "Táxi" ? (
+                    <Text style={styles.subtitulo}>aprox. </Text>
+                  ) : null}
                   R${item.preco}
                 </Text>
                 {renderRightIcon(item, selecionado)}
@@ -457,6 +459,7 @@ const styles = StyleSheet.create({
   subtitulo: {
     marginTop: 4,
     fontSize: 14,
+    fontWeight: "200",
     color: "#666",
   },
 
