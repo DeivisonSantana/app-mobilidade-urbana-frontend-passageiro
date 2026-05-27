@@ -1,7 +1,8 @@
 // app/home.tsx
+import FolhaEscolherOferta from "@/components/corrida/FolhaEscolherOferta";
+import ViagemComParada from "@/components/corrida/ViagemComParada";
 import FolhaInferior from "@/components/FolhaInferior";
 import Map from "@/components/Map";
-import ViagemComParada from "@/components/corrida/ViagemComParada";
 import { useAuth } from "@/context/AuthProvider";
 import { useUi } from "@/context/UiContext";
 import { Ionicons } from "@expo/vector-icons";
@@ -76,6 +77,12 @@ export default function Home() {
     setShowViagemComParada,
   ] = useState(false);
 
+  // 🔥 NOVO
+  const [
+    showFolhaEscolherOferta,
+    setShowFolhaEscolherOferta,
+  ] = useState(false);
+
   const userInitialRegion =
     useRef<Region | null>(
       null,
@@ -87,9 +94,9 @@ export default function Home() {
   ] = useState<number>(0);
 
   const [mapBottomPadding, setMapBottomPadding] =
-  useState(320);
+    useState(320);
 
-  // 🔥 NOVO: Estado global do itinerário
+  // 🔥 Estado global do itinerário
   const [
     itinerario,
     setItinerario,
@@ -112,13 +119,15 @@ export default function Home() {
     router,
   ]);
 
-  // Sincroniza o estado do modal com o Context
+  // Sincroniza modal com Context
   useEffect(() => {
     setModalVisible(
-      showViagemComParada,
-    );
+      showViagemComParada ||
+      showFolhaEscolherOferta
+    )
   }, [
     showViagemComParada,
+    showFolhaEscolherOferta,
     setModalVisible,
   ]);
 
@@ -178,7 +187,7 @@ export default function Home() {
           adjustedRegion,
         );
 
-        // 🔥 injeta origem automaticamente no itinerário
+        // 🔥 injeta origem automaticamente
         if (addressName) {
           setItinerario(
             (prev) =>
@@ -226,11 +235,16 @@ export default function Home() {
       );
     }, []);
 
-  const handleCloseViagemComParada =
+  // 🔥 CANCELA CORRIDA
+  // limpa mapa + rota + itinerário
+  const handleCancelarViagem =
     useCallback(() => {
       setShowViagemComParada(false);
 
-      // 🔥 limpa rota do mapa
+      setShowFolhaEscolherOferta(
+        false,
+      );
+
       // 🔥 limpa rota mas mantém origem
       setItinerario((prev) => [
         prev[0],
@@ -244,19 +258,47 @@ export default function Home() {
         },
       ]);
 
-      // 🔥 centraliza novamente no usuário
+      // 🔥 recentraliza usuário
       if (userInitialRegion.current) {
-        const offsetLatitude = 0.0064;
+        const offsetLatitude =
+          0.0064;
 
         setRegion({
           ...userInitialRegion.current,
           latitude:
-            userInitialRegion.current.latitude -
+            userInitialRegion.current
+              .latitude -
             offsetLatitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         });
       }
+    }, []);
+
+  // 🔥 NOVO
+  // prossegue fluxo sem limpar mapa
+  const handleProsseguirViagem =
+    useCallback(() => {
+      setShowViagemComParada(
+        false,
+      );
+
+      setShowFolhaEscolherOferta(
+        true,
+      );
+    }, []);
+
+  // 🔥 NOVO
+  // voltar da oferta para edição
+  const handleVoltarParaEdicao =
+    useCallback(() => {
+      setShowFolhaEscolherOferta(
+        false,
+      );
+
+      setShowViagemComParada(
+        true,
+      );
     }, []);
 
   // 🔥 lista operacional do mapa
@@ -269,6 +311,20 @@ export default function Home() {
           item.longitude,
       );
     }, [itinerario]);
+
+  // 🔥 partida
+  const partida =
+    itinerarioMapa.length > 0
+      ? itinerarioMapa[0]
+      : null;
+
+  // 🔥 destino
+  const destino =
+    itinerarioMapa.length > 1
+      ? itinerarioMapa[
+      itinerarioMapa.length - 1
+      ]
+      : null;
 
   if (authLoading) {
     return (
@@ -303,7 +359,9 @@ export default function Home() {
       }
     >
       <Map
-        mapBottomPadding={mapBottomPadding}
+        mapBottomPadding={
+          mapBottomPadding
+        }
         region={region}
         onRegionChange={
           setRegion
@@ -319,19 +377,18 @@ export default function Home() {
         }
       />
 
-      {/* 🔥 BOTÃO FLUTUANTE IGUAL 99 */}
-      {showViagemComParada &&
+      {/* 🔥 botão voltar */}
+      {(showViagemComParada ||
+        showFolhaEscolherOferta) &&
         !showBuscarEndereco && (
           <TouchableOpacity
             onPress={
-              handleCloseViagemComParada
+              showFolhaEscolherOferta
+                ? handleVoltarParaEdicao
+                : handleCancelarViagem
             }
-            activeOpacity={
-              0.8
-            }
-            style={
-              styles.backFloatingButton
-            }
+            activeOpacity={0.8}
+            style={styles.backFloatingButton}
           >
             <Ionicons
               name="chevron-back"
@@ -341,20 +398,24 @@ export default function Home() {
           </TouchableOpacity>
         )}
 
-      {/* FolhaInferior só aparece quando ViagemComParada NÃO está visível */}
-      {!showViagemComParada && (
-        <FolhaInferior
-          onSheetChange={
-            handleSheetStateChange
-          }
-          onAdicionarParada={
-            handleAdicionarParada
-          }
-        />
-      )}
+      {/* 🔥 FolhaInferior */}
+      {!showViagemComParada &&
+        !showFolhaEscolherOferta && (
+          <FolhaInferior
+            onSheetChange={
+              handleSheetStateChange
+            }
+            onAdicionarParada={
+              handleAdicionarParada
+            }
+          />
+        )}
 
+      {/* 🔥 ViagemComParada */}
       <ViagemComParada
-        onMapPaddingChange={setMapBottomPadding}
+        onMapPaddingChange={
+          setMapBottomPadding
+        }
         onShowBuscarEndereco={
           setShowBuscarEndereco
         }
@@ -362,7 +423,10 @@ export default function Home() {
           showViagemComParada
         }
         onClose={
-          handleCloseViagemComParada
+          handleCancelarViagem
+        }
+        onConfirmar={
+          handleProsseguirViagem
         }
         itinerario={
           itinerario
@@ -371,6 +435,20 @@ export default function Home() {
           setItinerario
         }
       />
+
+      {/* 🔥 FolhaEscolherOferta */}
+      {showFolhaEscolherOferta && (
+        <FolhaEscolherOferta
+          onSheetChange={
+            handleSheetStateChange
+          }
+          partida={partida}
+          destino={destino}
+          onClose={
+            handleVoltarParaEdicao
+          }
+        />
+      )}
     </View>
   );
 }
@@ -396,7 +474,6 @@ const styles =
       color: "#666",
     },
 
-    // 🔥 NOVO
     backFloatingButton: {
       position: "absolute",
 
