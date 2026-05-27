@@ -38,7 +38,7 @@ export default function FolhaEscolherOferta({
 }: Props) {
   const sheetRef = useRef<BottomSheet | null>(null);
 
-  const snapPoints = useMemo(() => ["35%", "82%"], []);
+  const snapPoints = useMemo(() => ["35%", "70%"], []);
 
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("2");
 
@@ -48,7 +48,7 @@ export default function FolhaEscolherOferta({
         id: "1",
         titulo: "Negocia",
         subtitulo: "Negocie e escolha",
-        preco: "13,90",
+        preco: "35,80",
         tempo: "4 min",
         tipo: "carro",
         negociavel: true,
@@ -406,14 +406,14 @@ const styles = StyleSheet.create({
   },
 
   titulo: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "400",
     color: "#111",
   },
 
   subtitulo: {
     marginTop: 4,
-    fontSize: 15,
+    fontSize: 14,
     color: "#666",
   },
 
@@ -431,45 +431,44 @@ const styles = StyleSheet.create({
   },
 
   preco: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 17,
+    fontWeight: "800",
     color: "#111",
-    marginRight: 12,
+    marginRight: 10,
+  },
+
+  negociacaoValor: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#111",
+    marginHorizontal: 8,
   },
 
   // Estilos para o componente de negociação com botões individuais
   negociacaoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 8,
   },
 
   negociacaoButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 25,
+    height: 25,
+    borderRadius: 5,
     backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
 
   negociacaoButtonText: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: "600",
     color: "#111",
   },
 
-  negociacaoValor: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111",
-    marginHorizontal: 12,
-  },
+
 
   // Estilos para checkbox quadrado
   checkboxDesmarcado: {
