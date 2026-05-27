@@ -291,7 +291,13 @@ export default function FolhaEscolherOferta({
                   </>
                 )}
 
-                <View style={styles.infoDot} />
+                <View style={styles.infoDot}>
+                  <Ionicons
+                    name="information"
+                    size={10}
+                    color="#666"
+                  />
+                </View>
               </View>
 
               {!!item.subtitulo && (
@@ -444,11 +450,13 @@ const styles = StyleSheet.create({
   },
 
   infoDot: {
-    width: 8,
-    height: 8,
+    width: 16,
+    height: 16,
     borderRadius: 999,
-    backgroundColor: "#d1d5db",
+    backgroundColor: "#f1f1f1",
     marginLeft: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   rightContainer: {
