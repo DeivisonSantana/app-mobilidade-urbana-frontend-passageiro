@@ -365,46 +365,44 @@ export default function FolhaEscolherOferta({
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
-          ListFooterComponent={
-            <>
-              <TouchableOpacity style={styles.cartaoContainer}>
-                <View style={styles.cartaoLeft}>
-                  <View style={styles.cartaoIcone}>
-                    <View style={styles.mastercardCircle1} />
-                    <View style={styles.mastercardCircle2} />
-                  </View>
-                  <Text style={styles.cartaoTexto}>3048</Text>
-                </View>
-
-                <Ionicons name="chevron-forward" size={20} color="#444" />
-              </TouchableOpacity>
-
-              <View style={styles.footer}>
-                <Text style={styles.valorFooter}>
-                  {valorSelecionadoExibicao}
-                </Text>
-
-                <TouchableOpacity
-                  style={styles.botaoSolicitar}
-                  onPress={() => {
-                    console.log("Chamando motorista para:", {
-                      de: partida?.name,
-                      para: destino?.name,
-                      categoria: nomeSelecionadoExibicao,
-                      valor: valorSelecionadoExibicao,
-                    });
-                  }}
-                >
-                  <Text style={styles.botaoSolicitarTexto}>Solicitar</Text>
-                  <Text style={styles.botaoSolicitarSubTexto}>
-                    {nomeSelecionadoExibicao}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          }
         />
+
       </BottomSheet>
+      <View style={styles.footerWrapper}>
+        <TouchableOpacity style={styles.cartaoContainer}>
+          <View style={styles.cartaoLeft}>
+            <View style={styles.cartaoIcone}>
+              <View style={styles.mastercardCircle1} />
+              <View style={styles.mastercardCircle2} />
+            </View>
+            <Text style={styles.cartaoTexto}>3048</Text>
+          </View>
+
+          <Ionicons name="chevron-forward" size={20} color="#444" />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.footer}>
+        <Text style={styles.valorFooter}>
+          {valorSelecionadoExibicao}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.botaoSolicitar}
+          onPress={() => {
+            console.log("Chamando motorista para:", {
+              de: partida?.name,
+              para: destino?.name,
+              categoria: nomeSelecionadoExibicao,
+              valor: valorSelecionadoExibicao,
+            });
+          }}
+        >
+          <Text style={styles.botaoSolicitarTexto}>Solicitar</Text>
+          <Text style={styles.botaoSolicitarSubTexto}>
+            {nomeSelecionadoExibicao}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -416,7 +414,7 @@ const styles = StyleSheet.create({
 
   contentContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
 
   itemContainer: {
@@ -620,4 +618,10 @@ const styles = StyleSheet.create({
     color: "#333",
     marginTop: 2,
   },
+  footerWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  }
 });
