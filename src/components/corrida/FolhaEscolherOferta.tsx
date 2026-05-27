@@ -240,6 +240,7 @@ export default function FolhaEscolherOferta({
     return [
       "Negocia",
       "Pop",
+      "Moto",
       "Pop Expresso",
       "Táxi",
     ].includes(item.titulo);
