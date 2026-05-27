@@ -236,6 +236,15 @@ export default function FolhaEscolherOferta({
     return renderCheckbox(selecionado);
   };
 
+  const deveRenderizarCapacidade = (item: CategoriaItem) => {
+    return [
+      "Negocia",
+      "Pop",
+      "Pop Expresso",
+      "Táxi",
+    ].includes(item.titulo);
+  };
+
   const renderItem = useCallback(
     ({ item }: { item: CategoriaItem }) => {
       const selecionado = categoriaSelecionada === item.id;
@@ -264,19 +273,23 @@ export default function FolhaEscolherOferta({
                   {item.titulo}
                 </Text>
 
-                {item.negociavel && (
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={14}
-                    color="#111"
-                    style={{ marginLeft: 4 }}
-                  />
+                {deveRenderizarCapacidade(item) && (
+                  <>
+                    <MaterialCommunityIcons
+                      name="account"
+                      size={14}
+                      color="#111"
+                      style={{ marginLeft: 4 }}
+                    />
+
+                    <View>
+                      <Text>
+                        4
+                      </Text>
+                    </View>
+                  </>
                 )}
-                <View>
-                  <Text>
-                    4
-                  </Text>
-                </View>
+
                 <View style={styles.infoDot} />
               </View>
 
@@ -479,8 +492,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#111",
   },
-
-
 
   // Estilos para checkbox quadrado
   checkboxDesmarcado: {
