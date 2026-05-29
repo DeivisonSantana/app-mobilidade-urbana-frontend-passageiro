@@ -1,3 +1,4 @@
+import { InterfaceEndereco } from "@/app/(main)/home";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -10,15 +11,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-interface EnderecoItem {
-  name: string;
-  formattedAddress: string;
-  latitude: number;
-  longitude: number;
-  distancia: string;
-  order: number;
-}
 
 interface EnderecoObjeto {
   name: string;
@@ -33,7 +25,7 @@ interface Props {
   partida: EnderecoObjeto | null;
   destino: EnderecoObjeto | null;
   onClose: () => void;
-    itinerario?: EnderecoItem[];
+    itinerario?: InterfaceEndereco[];
 }
 
 interface CategoriaItem {

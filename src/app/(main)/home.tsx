@@ -36,7 +36,7 @@ export interface InterfaceEndereco {
   latitude: number;
   longitude: number;
   distancia: string;
-  order: number;
+  order?: number; // 👈 Adicione a "?" aqui para torná-lo opcional!
 }
 
 const itinerarioInicial: InterfaceEndereco[] = [
@@ -152,16 +152,16 @@ export default function Home() {
           prev.map((item, index) =>
             index === 0
               ? {
-                  ...item,
+                ...item,
 
-                  name: addressName,
+                name: addressName,
 
-                  formattedAddress: addressName,
+                formattedAddress: addressName,
 
-                  latitude: userRegion.latitude,
+                latitude: userRegion.latitude,
 
-                  longitude: userRegion.longitude,
-                }
+                longitude: userRegion.longitude,
+              }
               : item,
           ),
         );
@@ -308,6 +308,8 @@ export default function Home() {
         visible={showParaOndeVamos}
         onClose={handleCloseParaOndeVamos}
         onAdicionarParada={handleAdicionarParada}
+        setItinerario={setItinerario}
+        itinerario={itinerario} // 👈 ADICIONE ESTA LINHA AQUI
       />
 
       {/* 🔥 ViagemComParada */}

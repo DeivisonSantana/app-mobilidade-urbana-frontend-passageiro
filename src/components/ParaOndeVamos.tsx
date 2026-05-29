@@ -1,5 +1,6 @@
 // components/ParaOndeVamos.tsx
 
+import { InterfaceEndereco } from "@/app/(main)/home";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
@@ -16,10 +17,7 @@ import {
   View,
 } from "react-native";
 import { api } from "../Services/api";
-
 const { width } = Dimensions.get("window");
-
-const CACHE_KEY = "@last_user_location";
 const CACHE_HISTORICO_KEY = "@historico_enderecos";
 
 interface props {
@@ -27,43 +25,20 @@ interface props {
   onClose: () => void;
   duration?: number;
   onAdicionarParada?: () => void;
+  // 🔥 NOVAS PROPS CONECTADAS À HOME
+  itinerario: InterfaceEndereco[];
+  setItinerario: React.Dispatch<React.SetStateAction<InterfaceEndereco[]>>;
 }
-
-interface InterfaceEndereco {
-  name: string;
-  formattedAddress: string;
-  latitude: number;
-  longitude: number;
-  distancia: string;
-  order?: number;
-}
-
-const InputsIntinearioInicial: InterfaceEndereco[] = [
-  {
-    name: "",
-    formattedAddress: "",
-    latitude: 0,
-    longitude: 0,
-    distancia: "0km",
-    order: 0,
-  },
-  {
-    name: "",
-    formattedAddress: "",
-    latitude: 0,
-    longitude: 0,
-    distancia: "0km",
-    order: 1,
-  },
-];
 
 const enderecosPadrao: InterfaceEndereco[] = [];
 
-export default function ParaOndevamos({
+export default function ParaOndeVamos({
   visible,
   onClose,
   duration = 300,
   onAdicionarParada,
+  itinerario,
+  setItinerario,
 }: props) {
   const translateX = useRef(new Animated.Value(width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -74,12 +49,8 @@ export default function ParaOndevamos({
   const [historicoCache, setHistoricoCache] = useState<InterfaceEndereco[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [inputsIntinerario, setInputsIntinerario] = useState<InterfaceEndereco[]>(
-    InputsIntinearioInicial,
-  );
-
+  // Controla qual input está ativo (0 para Origem, 1 para Destino)
   const [inputSelecionado, setInputSelecionado] = useState<number>(1);
-
   const inputRefs = useRef<TextInput[]>([]);
 
   const listaExibicao =
@@ -87,12 +58,12 @@ export default function ParaOndevamos({
 
   const handleAdicionarParada = () => {
     onClose();
-
     if (onAdicionarParada) {
       onAdicionarParada();
     }
   };
 
+  // Animação do Skeleton
   useEffect(() => {
     let animationLoop: Animated.CompositeAnimation | null = null;
 
@@ -111,7 +82,6 @@ export default function ParaOndevamos({
           }),
         ]),
       );
-
       animationLoop.start();
     } else {
       skeletonOpacity.setValue(0.4);
@@ -122,15 +92,14 @@ export default function ParaOndevamos({
     };
   }, [loading]);
 
+  // Histórico em Cache (AsyncStorage)
   const carregarHistoricoCache = async () => {
     try {
       const cachedData = await AsyncStorage.getItem(CACHE_HISTORICO_KEY);
-
       if (cachedData) {
         setHistoricoCache(JSON.parse(cachedData));
       } else {
         setHistoricoCache(enderecosPadrao);
-
         await AsyncStorage.setItem(
           CACHE_HISTORICO_KEY,
           JSON.stringify(enderecosPadrao),
@@ -147,13 +116,10 @@ export default function ParaOndevamos({
       const historicoFiltrado = historicoCache.filter(
         (item) => item.formattedAddress !== novoEndereco.formattedAddress,
       );
-
       const novoHistorico = [novoEndereco, ...historicoFiltrado];
-
       const historicoLimitado = novoHistorico.slice(0, 10);
 
       setHistoricoCache(historicoLimitado);
-
       await AsyncStorage.setItem(
         CACHE_HISTORICO_KEY,
         JSON.stringify(historicoLimitado),
@@ -171,44 +137,17 @@ export default function ParaOndevamos({
         (item) =>
           item.formattedAddress !== enderecoParaRemover.formattedAddress,
       );
-
       setHistoricoCache(historicoAtualizado);
-
       await AsyncStorage.setItem(
         CACHE_HISTORICO_KEY,
         JSON.stringify(historicoAtualizado),
       );
-
-      console.log("🗑️ Endereço removido do cache com sucesso!");
     } catch (error) {
       console.log("Erro ao remover endereço do cache:", error);
     }
   };
 
-  const carregarLocalizacaoSalva = async () => {
-    try {
-      const cached = await AsyncStorage.getItem(CACHE_KEY);
-
-      if (cached) {
-        const locationData = JSON.parse(cached);
-
-        setInputsIntinerario((prev) =>
-          prev.map((item, index) =>
-            index === 0
-              ? {
-                ...item,
-                name: locationData.formattedAddress || "Localização Atual",
-                formattedAddress: locationData.formattedAddress || "",
-              }
-              : item,
-          ),
-        );
-      }
-    } catch (error) {
-      console.log("Erro ao recuperar endereço para o input:", error);
-    }
-  };
-
+  // Requisição de busca na API
   const buscarEnderecoApi = async (texto: string) => {
     if (!texto || texto.trim().length === 0) {
       setListaEnderecos([]);
@@ -225,7 +164,6 @@ export default function ParaOndevamos({
 
       if (response.data) {
         const { name, formattedAddress, latitude, longitude } = response.data;
-
         const novoEnderecoObjeto = {
           name,
           formattedAddress,
@@ -233,7 +171,6 @@ export default function ParaOndevamos({
           longitude,
           distancia: "--",
         };
-
         setListaEnderecos([novoEnderecoObjeto]);
       }
     } catch (error) {
@@ -247,10 +184,10 @@ export default function ParaOndevamos({
     carregarHistoricoCache();
   }, []);
 
+  // Debounce para escutar as mudanças do itinerário global da Home
   useEffect(() => {
-    const textoAtual = inputsIntinerario[inputSelecionado]?.name || "";
-
-    const itemAtual = inputsIntinerario[inputSelecionado];
+    const textoAtual = itinerario[inputSelecionado]?.name || "";
+    const itemAtual = itinerario[inputSelecionado];
 
     if (itemAtual && itemAtual.formattedAddress !== "") {
       return;
@@ -263,10 +200,11 @@ export default function ParaOndevamos({
     }, 600);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [inputsIntinerario, inputSelecionado]);
+  }, [itinerario, inputSelecionado, visible]);
 
+  // 🔥 Seleção do endereço atualizando o estado global da Home
   const handleSelecionarEndereco = async (item: InterfaceEndereco) => {
-    setInputsIntinerario((prev) =>
+    setItinerario((prev) =>
       prev.map((input, index) =>
         index === inputSelecionado
           ? {
@@ -275,25 +213,33 @@ export default function ParaOndevamos({
             formattedAddress: item.formattedAddress,
             latitude: item.latitude,
             longitude: item.longitude,
+            order: index,
           }
           : input,
       ),
     );
 
     await salvarEnderecoNoCache(item);
-
     setListaEnderecos([]);
 
-    console.log("📍 Endereço Selecionado e Gravado em Cache com Sucesso!");
+    // Se preencheu o destino (index 1), fecha a tela e renderiza a rota no mapa da Home
+    if (inputSelecionado === 1) {
+      onClose();
+    } else {
+      // Se alterou a origem (index 0), joga o foco automaticamente para o destino
+      setTimeout(() => {
+        inputRefs.current[1]?.focus();
+      }, 150);
+    }
   };
 
+  // Botão Voltar Físico do Android
   useEffect(() => {
     const onBackPress = () => {
       if (visible) {
         onClose();
         return true;
       }
-
       return false;
     };
 
@@ -301,23 +247,19 @@ export default function ParaOndevamos({
       "hardwareBackPress",
       onBackPress,
     );
-
     return () => subscription.remove();
   }, [visible, onClose]);
 
+  // Controle de Animações de Entrada/Saída (Drawer Lateral)
   useEffect(() => {
     if (visible) {
       setIsMounted(true);
-
-      carregarLocalizacaoSalva();
-
       Animated.parallel([
         Animated.timing(translateX, {
           toValue: 0,
           duration,
           useNativeDriver: true,
         }),
-
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: duration * 0.8,
@@ -325,6 +267,7 @@ export default function ParaOndevamos({
         }),
       ]).start(() => {
         setTimeout(() => {
+          // Sempre foca no destino ao abrir, a menos que esteja vazio
           inputRefs.current[1]?.focus();
         }, 100);
       });
@@ -335,7 +278,6 @@ export default function ParaOndevamos({
           duration,
           useNativeDriver: true,
         }),
-
         Animated.timing(overlayOpacity, {
           toValue: 0,
           duration: duration * 0.8,
@@ -344,7 +286,6 @@ export default function ParaOndevamos({
       ]).start(({ finished }) => {
         if (finished) {
           setIsMounted(false);
-          setInputsIntinerario(InputsIntinearioInicial);
           setListaEnderecos([]);
           setLoading(false);
         }
@@ -370,26 +311,12 @@ export default function ParaOndevamos({
     >
       {/* Overlay */}
       <Pressable
-        style={[
-          {
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          },
-        ]}
+        style={[{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }]}
         onPress={onClose}
       >
         <Animated.View
           style={[
-            {
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            },
+            { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
             {
               backgroundColor: "rgba(0,0,0,0.25)",
               opacity: overlayOpacity,
@@ -418,25 +345,20 @@ export default function ParaOndevamos({
             <View style={styles.userContainer}>
               <View style={styles.userPill}>
                 <Ionicons name="person-circle" size={28} color="#666" />
-
                 <Text style={styles.userName}>Diogo</Text>
-
                 <Ionicons name="chevron-down" size={16} color="#666" />
               </View>
             </View>
           </View>
-
           <View style={{ width: 24 }} />
         </View>
 
         <View style={{ padding: 10 }} />
-
-        {/* Título */}
         <Text style={styles.title}>Para onde vamos?</Text>
 
-        {/* INPUTS */}
+        {/* INPUTS MUDADOS PARA ESCUTAR O ITINERÁRIO GLOBAL */}
         <View style={styles.searchContainer}>
-          {inputsIntinerario.map((item, index) => {
+          {itinerario.slice(0, 2).map((item, index) => {
             const isOrigem = index === 0;
             const isDestino = index === 1;
 
@@ -455,11 +377,10 @@ export default function ParaOndevamos({
                       </View>
                     )}
                   </View>
-
                   {isOrigem && <View style={styles.verticalLine} />}
                 </View>
 
-                {/* INPUT */}
+                {/* TEXT INPUT CONTROLANDO A HOME */}
                 <View
                   style={[
                     styles.searchInput,
@@ -480,7 +401,7 @@ export default function ParaOndevamos({
                     value={item.name}
                     onFocus={() => setInputSelecionado(index)}
                     onChangeText={(texto) => {
-                      setInputsIntinerario((prev) =>
+                      setItinerario((prev) =>
                         prev.map((inp, idx) =>
                           idx === index
                             ? { ...inp, name: texto, formattedAddress: "" }
@@ -504,7 +425,7 @@ export default function ParaOndevamos({
           })}
         </View>
 
-        {/* HISTÓRICO */}
+        {/* HISTÓRICO / RESULTADOS */}
         <ScrollView
           style={styles.container}
           showsVerticalScrollIndicator={false}
@@ -514,68 +435,41 @@ export default function ParaOndevamos({
           <View style={styles.quickActions}>
             <TouchableOpacity style={styles.quickButton}>
               <Ionicons name="home" size={16} color="#5F6368" />
-
               <Text numberOfLines={1} style={styles.quickText}>
                 Avenida Bo...
               </Text>
-
-              <Ionicons
-                name="chevron-forward"
-                size={14}
-                color="#B0B0B0"
-              />
+              <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickButton}>
               <Ionicons name="briefcase" size={16} color="#5F6368" />
-
               <Text style={styles.quickText}>Trabalho</Text>
-
-              <Ionicons
-                name="chevron-forward"
-                size={14}
-                color="#B0B0B0"
-              />
+              <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickButton}>
               <Ionicons name="star" size={16} color="#5F6368" />
-
               <Text style={styles.quickText}>Favoritos</Text>
-
-              <Ionicons
-                name="chevron-forward"
-                size={14}
-                color="#B0B0B0"
-              />
+              <Ionicons name="chevron-forward" size={14} color="#B0B0B0" />
             </TouchableOpacity>
           </View>
 
-          {/* DIVIDER */}
           <View style={styles.divider} />
 
-          {/* LISTA */}
+          {/* LISTA DINÂMICA */}
           <View style={styles.list}>
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
                 <Animated.View
                   key={i}
-                  style={[
-                    styles.listItem,
-                    {
-                      opacity: skeletonOpacity,
-                    },
-                  ]}
+                  style={[styles.listItem, { opacity: skeletonOpacity }]}
                 >
                   <View
                     style={[
                       styles.listIconContainer,
-                      {
-                        backgroundColor: "#EBEBEB",
-                      },
+                      { backgroundColor: "#EBEBEB" },
                     ]}
                   />
-
                   <View style={styles.listContent}>
                     <View
                       style={{
@@ -586,7 +480,6 @@ export default function ParaOndevamos({
                         marginBottom: 8,
                       }}
                     />
-
                     <View
                       style={{
                         width: "90%",
@@ -613,7 +506,6 @@ export default function ParaOndevamos({
 
                   <View style={styles.listContent}>
                     <Text style={styles.listText}>{endereco.name}</Text>
-
                     <Text style={styles.listSubText}>
                       {endereco.formattedAddress}
                     </Text>
@@ -637,7 +529,6 @@ export default function ParaOndevamos({
               >
                 <Ionicons name="map" size={16} color="#111" />
               </View>
-
               <Text style={styles.footerButtonText}>
                 Definir local no mapa
               </Text>
@@ -652,7 +543,6 @@ export default function ParaOndevamos({
               >
                 <Ionicons name="add" size={18} color="#111" />
               </View>
-
               <Text style={styles.footerButtonText}>
                 Inserir mais tarde
               </Text>
@@ -663,7 +553,6 @@ export default function ParaOndevamos({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   drawer: {
     position: "absolute",

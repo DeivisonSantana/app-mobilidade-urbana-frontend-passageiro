@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 
+import { InterfaceEndereco } from "@/app/(main)/home";
 import {
   BackHandler,
   StyleSheet,
@@ -20,16 +21,6 @@ import {
 import FolhaBuscarEndereco from "@/components/FolhaBuscarEndereco";
 
 const MAX_PARADAS = 4;
-
-export interface InterfaceEndereco {
-  name: string;
-  formattedAddress: string;
-  latitude: number;
-  longitude: number;
-  distancia: string;
-  order: number;
-}
-
 interface props {
   visible: boolean;
 

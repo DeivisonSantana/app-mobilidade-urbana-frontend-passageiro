@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
+import { InterfaceEndereco } from "@/app/(main)/home";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
@@ -14,15 +15,6 @@ import MapView, {
 } from "react-native-maps";
 
 import MapViewDirections from "react-native-maps-directions";
-interface EnderecoItem {
-  name: string;
-  formattedAddress: string;
-  latitude: number;
-  longitude: number;
-  distancia: string;
-  order: number;
-}
-
 interface MapProps {
   region: Region | null;
 
@@ -34,7 +26,7 @@ interface MapProps {
   bottomSheetIndex?: number;
 
   // 🔥 NOVO
-  itinerario?: EnderecoItem[];
+  itinerario?: InterfaceEndereco[];
 
   mapBottomPadding?: number;
 }
