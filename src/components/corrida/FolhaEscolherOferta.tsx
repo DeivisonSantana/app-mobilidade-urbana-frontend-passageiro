@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -41,7 +41,7 @@ interface CategoriaItem {
   iconeDireita?: "check" | "circle" | "arrow";
 }
 
-// Componente Skeleton para cada item
+// Componente Skeleton para cada item da lista
 const SkeletonItem = ({ animatedValue }: { animatedValue: Animated.Value }) => {
   const opacity = animatedValue.interpolate({
     inputRange: [0, 1],
@@ -66,6 +66,39 @@ const SkeletonItem = ({ animatedValue }: { animatedValue: Animated.Value }) => {
         <Animated.View style={[styles.skeletonCheckbox, { opacity }]} />
       </View>
     </Animated.View>
+  );
+};
+
+// Componente Skeleton para o FixedBottom
+const SkeletonFixedBottom = ({ animatedValue }: { animatedValue: Animated.Value }) => {
+  const insets = useSafeAreaInsets();
+  const opacity = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 1],
+  });
+
+  return (
+    <View
+      style={[
+        styles.fixedBottom,
+        { paddingBottom: Math.max(insets.bottom + 10, 24) },
+      ]}
+    >
+      <TouchableOpacity style={styles.cartaoContainer} activeOpacity={1}>
+        <View style={styles.cartaoLeft}>
+          <Animated.View style={[styles.skeletonCardIcon, { opacity }]} />
+          <Animated.View style={[styles.skeletonCardText, { opacity }]} />
+        </View>
+        <Animated.View style={[styles.skeletonChevron, { opacity }]} />
+      </TouchableOpacity>
+      <View style={styles.footer}>
+        <Animated.View style={[styles.skeletonValorFooter, { opacity }]} />
+        <Animated.View style={[styles.skeletonBotaoSolicitar, { opacity }]}>
+          <Animated.View style={[styles.skeletonBotaoTexto, { opacity }]} />
+          <Animated.View style={[styles.skeletonBotaoSubTexto, { opacity }]} />
+        </Animated.View>
+      </View>
+    </View>
   );
 };
 
@@ -398,7 +431,7 @@ export default function FolhaEscolherOferta({
   // Renderiza o skeleton ou a lista real
   const renderContent = () => {
     if (isLoading) {
-      // Mostra 5 skeletons
+      // Mostra 7 skeletons (mesmo número de itens da lista)
       return (
         <>
           {[...Array(7)].map((_, index) => (
@@ -444,42 +477,47 @@ export default function FolhaEscolherOferta({
         </View>
       </BottomSheet>
 
-      <View
-        style={[
-          styles.fixedBottom,
-          { paddingBottom: Math.max(insets.bottom + 10, 24) },
-        ]}
-      >
-        <TouchableOpacity style={styles.cartaoContainer}>
-          <View style={styles.cartaoLeft}>
-            <View style={styles.cartaoIcone}>
-              <View style={styles.mastercardCircle1} />
-              <View style={styles.mastercardCircle2} />
+      {/* Renderiza o skeleton do fixedBottom ou o componente real */}
+      {isLoading ? (
+        <SkeletonFixedBottom animatedValue={animatedValue} />
+      ) : (
+        <View
+          style={[
+            styles.fixedBottom,
+            { paddingBottom: Math.max(insets.bottom + 10, 24) },
+          ]}
+        >
+          <TouchableOpacity style={styles.cartaoContainer}>
+            <View style={styles.cartaoLeft}>
+              <View style={styles.cartaoIcone}>
+                <View style={styles.mastercardCircle1} />
+                <View style={styles.mastercardCircle2} />
+              </View>
+              <Text style={styles.cartaoTexto}>3048</Text>
             </View>
-            <Text style={styles.cartaoTexto}>3048</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#444" />
-        </TouchableOpacity>
-        <View style={styles.footer}>
-          <Text style={styles.valorFooter}>{valorSelecionadoExibicao}</Text>
-          <TouchableOpacity
-            style={styles.botaoSolicitar}
-            onPress={() => {
-              console.log("Chamando motorista para:", {
-                de: partida?.name,
-                para: destino?.name,
-                categoria: nomeSelecionadoExibicao,
-                valor: valorSelecionadoExibicao,
-              });
-            }}
-          >
-            <Text style={styles.botaoSolicitarTexto}>Solicitar</Text>
-            <Text style={styles.botaoSolicitarSubTexto}>
-              {nomeSelecionadoExibicao}
-            </Text>
+            <Ionicons name="chevron-forward" size={20} color="#444" />
           </TouchableOpacity>
+          <View style={styles.footer}>
+            <Text style={styles.valorFooter}>{valorSelecionadoExibicao}</Text>
+            <TouchableOpacity
+              style={styles.botaoSolicitar}
+              onPress={() => {
+                console.log("Chamando motorista para:", {
+                  de: partida?.name,
+                  para: destino?.name,
+                  categoria: nomeSelecionadoExibicao,
+                  valor: valorSelecionadoExibicao,
+                });
+              }}
+            >
+              <Text style={styles.botaoSolicitarTexto}>Solicitar</Text>
+              <Text style={styles.botaoSolicitarSubTexto}>
+                {nomeSelecionadoExibicao}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -682,7 +720,7 @@ const styles = StyleSheet.create({
     borderColor: "#ececec",
     zIndex: 99,
   },
-  // Estilos do Skeleton
+  // Estilos do Skeleton para os itens da lista
   skeletonIcon: {
     width: 42,
     height: 42,
@@ -729,5 +767,53 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 4,
     backgroundColor: "#E1E9EE",
+  },
+  // Estilos do Skeleton para o FixedBottom
+  skeletonCardIcon: {
+    width: 34,
+    height: 22,
+    borderRadius: 5,
+    backgroundColor: "#E1E9EE",
+    marginRight: 10,
+  },
+  skeletonCardText: {
+    width: 60,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: "#E1E9EE",
+    marginLeft: 20,
+  },
+  skeletonChevron: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: "#E1E9EE",
+  },
+  skeletonValorFooter: {
+    width: 80,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: "#E1E9EE",
+  },
+  skeletonBotaoSolicitar: {
+    width: 190,
+    height: 60,
+    borderRadius: 22,
+    backgroundColor: "#E1E9EE",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  skeletonBotaoTexto: {
+    width: 80,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: "#CDD5DC",
+  },
+  skeletonBotaoSubTexto: {
+    width: 100,
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: "#CDD5DC",
   },
 });
