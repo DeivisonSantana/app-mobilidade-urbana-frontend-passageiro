@@ -8,6 +8,7 @@ import {
   Animated,
   BackHandler,
   Dimensions,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -59,10 +60,11 @@ export default function ParaOndeVamos({
     listaEnderecos.length > 0 ? listaEnderecos : historicoCache;
 
   const handleAdicionarParada = () => {
-    onClose();
-    if (onAdicionarParada) {
-      onAdicionarParada();
-    }
+    Keyboard.dismiss();
+      onClose();
+      if (onAdicionarParada) {
+        onAdicionarParada();
+      }
   };
 
   // Animação do Skeleton
