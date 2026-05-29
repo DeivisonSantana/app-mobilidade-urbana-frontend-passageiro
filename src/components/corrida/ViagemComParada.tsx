@@ -21,7 +21,7 @@ import FolhaBuscarEndereco from "@/components/FolhaBuscarEndereco";
 
 const MAX_PARADAS = 4;
 
-export interface EnderecoItem {
+export interface InterfaceEndereco {
   name: string;
   formattedAddress: string;
   latitude: number;
@@ -38,15 +38,13 @@ interface props {
   // 🔥 NOVO
   onConfirmar?: () => void;
 
-  onAdicionarParada?: () => void;
-
   duration?: number;
 
   onShowBuscarEndereco?: (visible: boolean) => void;
 
-  itinerario: EnderecoItem[];
+  itinerario: InterfaceEndereco[];
 
-  setItinerario: React.Dispatch<React.SetStateAction<EnderecoItem[]>>;
+  setItinerario: React.Dispatch<React.SetStateAction<InterfaceEndereco[]>>;
 
   onMapPaddingChange?: (padding: number) => void;
 }
@@ -57,9 +55,7 @@ export default function ViagemComParada({
   onClose,
 
   // 🔥 NOVO
-  onConfirmar,
-
-  onAdicionarParada,
+  onConfirmar, 
   onShowBuscarEndereco,
 
   itinerario,
@@ -89,7 +85,7 @@ export default function ViagemComParada({
     (item, index) => index !== 0 && item.name.trim() !== "",
   );
 
-  const reorganizarOrders = (lista: EnderecoItem[]) => {
+  const reorganizarOrders = (lista: InterfaceEndereco[]) => {
     return lista.map((item, index) => ({
       ...item,
       order: index,
@@ -110,7 +106,7 @@ export default function ViagemComParada({
     onShowBuscarEndereco?.(true);
   };
 
-  const handleSelecionarEndereco = (endereco: EnderecoItem) => {
+  const handleSelecionarEndereco = (endereco: InterfaceEndereco) => {
     if (inputSelecionadoIndex === null) {
       return;
     }
