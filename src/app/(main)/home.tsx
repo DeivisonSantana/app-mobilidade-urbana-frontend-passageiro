@@ -30,7 +30,7 @@ import {
 
 import { Region } from "react-native-maps";
 
-export interface EnderecoItem {
+export interface InterfaceEndereco {
   name: string;
   formattedAddress: string;
   latitude: number;
@@ -39,7 +39,7 @@ export interface EnderecoItem {
   order: number;
 }
 
-const itinerarioInicial: EnderecoItem[] = [
+const itinerarioInicial: InterfaceEndereco[] = [
   {
     name: "",
     formattedAddress: "",
@@ -85,7 +85,7 @@ export default function Home() {
 
   // 🔥 Estado global do itinerário
   const [itinerario, setItinerario] =
-    useState<EnderecoItem[]>(itinerarioInicial);
+    useState<InterfaceEndereco[]>(itinerarioInicial);
 
   useEffect(() => {
     if (!authLoading && !user) {
