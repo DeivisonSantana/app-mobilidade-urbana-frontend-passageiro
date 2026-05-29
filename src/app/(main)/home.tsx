@@ -319,7 +319,7 @@ export default function Home() {
         setItinerario={setItinerario}
         onSucesso={() => {
           setShowFolhaInferior(false);
-          setShowViagemComParada(true);
+          setShowFolhaEscolherOferta(true);
         }}
       />
 
