@@ -28,6 +28,7 @@ interface props {
   // 🔥 NOVAS PROPS CONECTADAS À HOME
   itinerario: InterfaceEndereco[];
   setItinerario: React.Dispatch<React.SetStateAction<InterfaceEndereco[]>>;
+  onSucesso?: () => void; // 👈 ADICIONE ESTA LINHA
 }
 
 const enderecosPadrao: InterfaceEndereco[] = [];
@@ -39,6 +40,7 @@ export default function ParaOndeVamos({
   onAdicionarParada,
   itinerario,
   setItinerario,
+  onSucesso,
 }: props) {
   const translateX = useRef(new Animated.Value(width)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -222,11 +224,14 @@ export default function ParaOndeVamos({
     await salvarEnderecoNoCache(item);
     setListaEnderecos([]);
 
-    // Se preencheu o destino (index 1), fecha a tela e renderiza a rota no mapa da Home
     if (inputSelecionado === 1) {
-      onClose();
+      onClose(); // Fecha o ParaOndeVamos
+
+      // 🔥 DISPARA O CALLBACK DE SUCESSO COORDENANDO AS TELAS
+      if (onSucesso) {
+        onSucesso();
+      }
     } else {
-      // Se alterou a origem (index 0), joga o foco automaticamente para o destino
       setTimeout(() => {
         inputRefs.current[1]?.focus();
       }, 150);

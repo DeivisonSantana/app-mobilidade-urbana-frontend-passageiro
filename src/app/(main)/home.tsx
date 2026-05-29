@@ -76,7 +76,8 @@ export default function Home() {
   const [showViagemComParada, setShowViagemComParada] = useState(false);
 
   const [showFolhaEscolherOferta, setShowFolhaEscolherOferta] = useState(false);
-
+  const [showFolhaInferior, setShowFolhaInferior] = useState(true);
+  const [progesseguirParaOferta, setProgesseguirParaOferta] = useState(false);
   const userInitialRegion = useRef<Region | null>(null);
 
   const [bottomSheetIndex, setBottomSheetIndex] = useState<number>(0);
@@ -187,16 +188,16 @@ export default function Home() {
   // 🔥 abre ViagemComParada
   const handleAdicionarParada = useCallback(() => {
     setShowParaOndeVamos(false);
-
     setShowViagemComParada(true);
   }, []);
 
   // 🔥 CANCELA CORRIDA
   const handleCancelarViagem = useCallback(() => {
+    setShowFolhaInferior(true)
     setShowViagemComParada(false);
 
     setShowFolhaEscolherOferta(false);
-
+    console.log(showFolhaInferior, ' showFolhaInferior handleCancelarViagem')
     // 🔥 limpa rota mantendo origem
     setItinerario((prev) => [
       prev[0],
@@ -228,17 +229,20 @@ export default function Home() {
   }, []);
 
   // 🔥 prossegue fluxo
-  const handleProsseguirViagem = useCallback(() => {
+  const handleProsseguirParaOferta = useCallback(() => {
+    setProgesseguirParaOferta(true);
+    setShowParaOndeVamos(false);
     setShowViagemComParada(false);
-
     setShowFolhaEscolherOferta(true);
+    console.log(progesseguirParaOferta, 'progesseguirParaOferta')
   }, []);
 
   // 🔥 voltar oferta → edição
-  const handleVoltarParaEdicao = useCallback(() => {
+  const handleVoltarParaHome = useCallback(() => {
+    setShowFolhaInferior(true)
+    setProgesseguirParaOferta(false)
     setShowFolhaEscolherOferta(false);
-
-    setShowViagemComParada(true);
+    console.log(showFolhaInferior, 'showFolhaInferior')
   }, []);
 
   // 🔥 lista operacional mapa
@@ -284,7 +288,7 @@ export default function Home() {
           <TouchableOpacity
             onPress={
               showFolhaEscolherOferta
-                ? handleVoltarParaEdicao
+                ? handleVoltarParaHome
                 : handleCancelarViagem
             }
             activeOpacity={0.8}
@@ -295,8 +299,7 @@ export default function Home() {
         )}
 
       {/* 🔥 FolhaInferior */}
-      {/* 🔥 FolhaInferior */}
-      {!showViagemComParada && !showFolhaEscolherOferta && (
+      {showFolhaInferior && (
         <FolhaInferior
           onSheetChange={handleSheetStateChange}
           onPressParaOndeVamos={handleAbrirParaOndeVamos}
@@ -307,9 +310,17 @@ export default function Home() {
       <ParaOndeVamos
         visible={showParaOndeVamos}
         onClose={handleCloseParaOndeVamos}
-        onAdicionarParada={handleAdicionarParada}
+        onAdicionarParada={() => {
+          setShowFolhaInferior(false);
+          setShowParaOndeVamos(false);
+          setShowViagemComParada(true);
+        }}
+        itinerario={itinerario}
         setItinerario={setItinerario}
-        itinerario={itinerario} // 👈 ADICIONE ESTA LINHA AQUI
+        onSucesso={() => {
+          setShowFolhaInferior(false);
+          setShowViagemComParada(true);
+        }}
       />
 
       {/* 🔥 ViagemComParada */}
@@ -318,7 +329,11 @@ export default function Home() {
         onShowBuscarEndereco={setShowBuscarEndereco}
         visible={showViagemComParada}
         onClose={handleCancelarViagem}
-        onConfirmar={handleProsseguirViagem}
+        onConfirmar={() => {
+          setShowFolhaInferior(false)
+          setShowViagemComParada(false)
+          setShowFolhaEscolherOferta(true)
+        }}
         itinerario={itinerario}
         setItinerario={setItinerario}
       />
@@ -330,7 +345,7 @@ export default function Home() {
           onSheetChange={handleSheetStateChange}
           partida={partida}
           destino={destino}
-          onClose={handleVoltarParaEdicao}
+          onClose={handleVoltarParaHome}
         />
       )}
     </View>
