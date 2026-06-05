@@ -490,6 +490,7 @@ export default function FolhaEscolherOferta({
         onChange={handleSheetChange}
         overDragResistanceFactor={13}
         enablePanDownToClose={false}
+        style={{ zIndex: 10, elevation: 10 }}
         handleIndicatorStyle={{
           backgroundColor: "#d1d5db",
           width: 42,
@@ -839,6 +840,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 6,
     alignItems: "center",
+    zIndex: 1, // Garante que o header fique acima dos itens da lista
   },
   headerTitle: {
     fontSize: 14,
@@ -849,7 +851,6 @@ const styles = StyleSheet.create({
   botaoVoltar: {
     position: "absolute",
     left: 16,
-    zIndex: 1,
     backgroundColor: "#fff",
     width: 44,
     height: 44,
