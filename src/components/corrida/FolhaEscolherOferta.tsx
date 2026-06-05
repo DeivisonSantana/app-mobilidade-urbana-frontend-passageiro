@@ -1,7 +1,13 @@
 import { InterfaceEndereco } from "@/app/(main)/home";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Image,
@@ -70,7 +76,11 @@ const SkeletonItem = ({ animatedValue }: { animatedValue: Animated.Value }) => {
 };
 
 // Componente Skeleton para o FixedBottom
-const SkeletonFixedBottom = ({ animatedValue }: { animatedValue: Animated.Value }) => {
+const SkeletonFixedBottom = ({
+  animatedValue,
+}: {
+  animatedValue: Animated.Value;
+}) => {
   const insets = useSafeAreaInsets();
   const opacity = animatedValue.interpolate({
     inputRange: [0, 1],
@@ -116,15 +126,15 @@ export default function FolhaEscolherOferta({
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("");
   const animatedValue = useRef(new Animated.Value(0)).current;
 
-  const snapPoints = useMemo(() => ["40%", "70%"], []);
+  const snapPoints = useMemo(() => ["30%", "70%", "96%"], []);
 
   // Simulação de requisição
   const fetchOfertas = useCallback(async () => {
     setIsLoading(true);
-    
+
     // Simula delay de rede
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
     // Dados mockados
     const mockCategorias: CategoriaItem[] = [
       {
@@ -192,10 +202,10 @@ export default function FolhaEscolherOferta({
         iconeDireita: "arrow",
       },
     ];
-    
+
     setCategorias(mockCategorias);
     // Define a categoria selecionada como a que tem selecionado: true
-    const selectedItem = mockCategorias.find(cat => cat.selecionado);
+    const selectedItem = mockCategorias.find((cat) => cat.selecionado);
     if (selectedItem) {
       setCategoriaSelecionada(selectedItem.id);
     }
@@ -217,12 +227,12 @@ export default function FolhaEscolherOferta({
             duration: 1000,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       ).start();
     };
 
     startAnimation();
-  }, []);
+  }, [animatedValue]);
 
   // Chama a requisição quando o componente monta
   useEffect(() => {
@@ -247,7 +257,7 @@ export default function FolhaEscolherOferta({
   );
 
   const handleNegociacaoClick = (item: CategoriaItem, acao: string) => {
-    console.log(itinerario, 'itinerario');
+    console.log(itinerario, "itinerario");
     console.log("chegou aqui", {
       item: item.titulo,
       preco: item.preco,
@@ -431,16 +441,18 @@ export default function FolhaEscolherOferta({
   // Renderiza o skeleton ou a lista real
   const renderContent = () => {
     if (isLoading) {
-      // Mostra 7 skeletons (mesmo número de itens da lista)
       return (
         <>
           {[...Array(7)].map((_, index) => (
-            <SkeletonItem key={`skeleton-${index}`} animatedValue={animatedValue} />
+            <SkeletonItem
+              key={`skeleton-${index}`}
+              animatedValue={animatedValue}
+            />
           ))}
         </>
       );
     }
-    
+
     return (
       <BottomSheetFlatList
         data={categorias}
@@ -448,12 +460,28 @@ export default function FolhaEscolherOferta({
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
+        ListHeaderComponent={
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerTitle}>
+              Escolha uma ou mais categorias
+            </Text>
+          </View>
+        }
       />
     );
   };
 
   return (
     <View style={styles.container}>
+      {/* O Botão Voltar está estruturalmente ANTES do BottomSheet e possui zIndex: 1 */}
+      <TouchableOpacity
+        style={[styles.botaoVoltar, { top: insets.top + 16 }]}
+        onPress={onClose}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="arrow-back" size={28} color="#111" />
+      </TouchableOpacity>
+
       <BottomSheet
         ref={sheetRef}
         index={1}
@@ -472,9 +500,7 @@ export default function FolhaEscolherOferta({
           backgroundColor: "#fff",
         }}
       >
-        <View style={styles.listContainer}>
-          {renderContent()}
-        </View>
+        <View style={styles.listContainer}>{renderContent()}</View>
       </BottomSheet>
 
       {/* Renderiza o skeleton do fixedBottom ou o componente real */}
@@ -525,6 +551,7 @@ export default function FolhaEscolherOferta({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   listContainer: {
     flex: 1,
@@ -702,12 +729,6 @@ const styles = StyleSheet.create({
     color: "#333",
     marginTop: 2,
   },
-  footerWrapper: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
   fixedBottom: {
     position: "absolute",
     bottom: 0,
@@ -720,7 +741,6 @@ const styles = StyleSheet.create({
     borderColor: "#ececec",
     zIndex: 99,
   },
-  // Estilos do Skeleton para os itens da lista
   skeletonIcon: {
     width: 42,
     height: 42,
@@ -768,7 +788,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#E1E9EE",
   },
-  // Estilos do Skeleton para o FixedBottom
   skeletonCardIcon: {
     width: 34,
     height: 22,
@@ -815,5 +834,35 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 4,
     backgroundColor: "#CDD5DC",
+  },
+  headerContainer: {
+    paddingTop: 8,
+    paddingBottom: 6,
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#8f8f8f",
+  },
+  // Mudado para zIndex: 1 para que o BottomSheet cubra elegantemente ao subir
+  botaoVoltar: {
+    position: "absolute",
+    left: 16,
+    zIndex: 1,
+    backgroundColor: "#fff",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
