@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 
+import { InterfaceEndereco } from "@/app/(main)/home";
 import {
   BackHandler,
   StyleSheet,
@@ -20,16 +21,6 @@ import {
 import FolhaBuscarEndereco from "@/components/FolhaBuscarEndereco";
 
 const MAX_PARADAS = 4;
-
-export interface EnderecoItem {
-  name: string;
-  formattedAddress: string;
-  latitude: number;
-  longitude: number;
-  distancia: string;
-  order: number;
-}
-
 interface props {
   visible: boolean;
 
@@ -38,25 +29,15 @@ interface props {
   // 🔥 NOVO
   onConfirmar?: () => void;
 
-  onAdicionarParada?: () => void;
-
   duration?: number;
 
-  onShowBuscarEndereco?: (
-    visible: boolean,
-  ) => void;
+  onShowBuscarEndereco?: (visible: boolean) => void;
 
-  itinerario: EnderecoItem[];
+  itinerario: InterfaceEndereco[];
 
-  setItinerario: React.Dispatch<
-    React.SetStateAction<
-      EnderecoItem[]
-    >
-  >;
+  setItinerario: React.Dispatch<React.SetStateAction<InterfaceEndereco[]>>;
 
-  onMapPaddingChange?: (
-    padding: number,
-  ) => void;
+  onMapPaddingChange?: (padding: number) => void;
 }
 
 export default function ViagemComParada({
@@ -65,282 +46,167 @@ export default function ViagemComParada({
   onClose,
 
   // 🔥 NOVO
-  onConfirmar,
-
-  onAdicionarParada,
+  onConfirmar, 
   onShowBuscarEndereco,
 
   itinerario,
   setItinerario,
 }: props) {
-  const [isMounted, setIsMounted] =
-    useState(visible);
+  const [isMounted, setIsMounted] = useState(visible);
 
-  const [
-    showFolhaBuscarEndereco,
-    setShowFolhaBuscarEndereco,
-  ] = useState(false);
+  const [showFolhaBuscarEndereco, setShowFolhaBuscarEndereco] = useState(false);
 
-  const [
-    inputSelecionadoIndex,
-    setInputSelecionadoIndex,
-  ] = useState<
+  const [inputSelecionadoIndex, setInputSelecionadoIndex] = useState<
     number | null
   >(null);
 
-  const bottomSheetRef =
-    useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const snapPoints =
-    useMemo(() => {
-      const baseHeight = 40;
+  const snapPoints = useMemo(() => {
+    const baseHeight = 40;
 
-      const additionalHeight =
-        (itinerario.length - 2) *
-        5;
+    const additionalHeight = (itinerario.length - 2) * 5;
 
-      const totalHeight =
-        Math.min(
-          baseHeight +
-          additionalHeight,
-          85,
-        );
+    const totalHeight = Math.min(baseHeight + additionalHeight, 85);
 
-      return [`${totalHeight}%`];
-    }, [itinerario.length]);
+    return [`${totalHeight}%`];
+  }, [itinerario.length]);
 
-  const podeConfirmar =
-    itinerario.some(
-      (
-        item,
-        index,
-      ) =>
-        index !== 0 &&
-        item.name.trim() !== "",
-    );
+  const podeConfirmar = itinerario.some(
+    (item, index) => index !== 0 && item.name.trim() !== "",
+  );
 
-  const reorganizarOrders = (
-    lista: EnderecoItem[],
-  ) => {
-    return lista.map(
-      (
-        item,
-        index,
-      ) => ({
-        ...item,
-        order: index,
-      }),
-    );
+  const reorganizarOrders = (lista: InterfaceEndereco[]) => {
+    return lista.map((item, index) => ({
+      ...item,
+      order: index,
+    }));
   };
 
-  const handleSheetStateChange =
-    useCallback(
-      (
-        index: number,
-      ) => {
-        if (index === -1) {
-          setShowFolhaBuscarEndereco(
-            false,
-          );
-        }
-      },
-      [],
-    );
+  const handleSheetStateChange = useCallback((index: number) => {
+    if (index === -1) {
+      setShowFolhaBuscarEndereco(false);
+    }
+  }, []);
 
-  const handleInputClick = (
-    index: number,
-  ) => {
-    setInputSelecionadoIndex(
-      index,
-    );
+  const handleInputClick = (index: number) => {
+    setInputSelecionadoIndex(index);
 
-    setShowFolhaBuscarEndereco(
-      true,
-    );
+    setShowFolhaBuscarEndereco(true);
 
-    onShowBuscarEndereco?.(
-      true,
-    );
+    onShowBuscarEndereco?.(true);
   };
 
-  const handleSelecionarEndereco =
-    (
-      endereco: EnderecoItem,
-    ) => {
+  const handleSelecionarEndereco = (endereco: InterfaceEndereco) => {
+    if (inputSelecionadoIndex === null) {
+      return;
+    }
+
+    setItinerario((prev) => {
+      let novaLista = prev.map((item, index) =>
+        index === inputSelecionadoIndex
+          ? {
+              ...item,
+              ...endereco,
+              order: index,
+            }
+          : item,
+      );
+
+      const ultimoItem = novaLista[novaLista.length - 1];
+
+      const possuiInputVazio = novaLista.some((item) => !item.name);
+
+      // 🔥 mantém sempre um input vazio
       if (
-        inputSelecionadoIndex ===
-        null
+        ultimoItem.name &&
+        !possuiInputVazio &&
+        novaLista.length < MAX_PARADAS + 1
       ) {
-        return;
+        novaLista.push({
+          name: "",
+          formattedAddress: "",
+          latitude: 0,
+          longitude: 0,
+          distancia: "0km",
+          order: 0,
+        });
       }
 
-      setItinerario(
-        (prev) => {
-          let novaLista =
-            prev.map(
-              (
-                item,
-                index,
-              ) =>
-                index ===
-                  inputSelecionadoIndex
-                  ? {
-                    ...item,
-                    ...endereco,
-                    order:
-                      index,
-                  }
-                  : item,
-            );
+      return reorganizarOrders(novaLista);
+    });
 
-          const ultimoItem =
-            novaLista[
-            novaLista.length -
-            1
-            ];
+    setShowFolhaBuscarEndereco(false);
 
-          const possuiInputVazio =
-            novaLista.some(
-              (item) =>
-                !item.name,
-            );
+    onShowBuscarEndereco?.(false);
+  };
 
-          // 🔥 mantém sempre um input vazio
-          if (
-            ultimoItem.name &&
-            !possuiInputVazio &&
-            novaLista.length <
-            MAX_PARADAS + 1
-          ) {
-            novaLista.push({
-              name: "",
-              formattedAddress:
-                "",
-              latitude: 0,
-              longitude: 0,
-              distancia:
-                "0km",
-              order: 0,
-            });
-          }
+  const removerParada = (index: number) => {
+    if (index === 0) return;
 
-          return reorganizarOrders(
-            novaLista,
-          );
-        },
-      );
+    setItinerario((prev) => {
+      let novaLista = prev.filter((_, i) => i !== index);
 
-      setShowFolhaBuscarEndereco(
-        false,
-      );
+      // garante mínimo
+      if (novaLista.length === 1) {
+        novaLista.push({
+          name: "",
+          formattedAddress: "",
+          latitude: 0,
+          longitude: 0,
+          distancia: "0km",
+          order: 1,
+        });
+      }
 
-      onShowBuscarEndereco?.(
-        false,
-      );
-    };
+      const possuiInputVazio = novaLista.some((item) => !item.name);
 
-  const removerParada = (
-    index: number,
-  ) => {
-    if (index === 0)
-      return;
+      // 🔥 mantém placeholder
+      if (novaLista.length < MAX_PARADAS + 1 && !possuiInputVazio) {
+        novaLista.push({
+          name: "",
+          formattedAddress: "",
+          latitude: 0,
+          longitude: 0,
+          distancia: "0km",
+          order: 0,
+        });
+      }
 
-    setItinerario(
-      (prev) => {
-        let novaLista =
-          prev.filter(
-            (
-              _,
-              i,
-            ) => i !== index,
-          );
-
-        // garante mínimo
-        if (
-          novaLista.length === 1
-        ) {
-          novaLista.push({
-            name: "",
-            formattedAddress:
-              "",
-            latitude: 0,
-            longitude: 0,
-            distancia:
-              "0km",
-            order: 1,
-          });
-        }
-
-        const possuiInputVazio =
-          novaLista.some(
-            (item) =>
-              !item.name,
-          );
-
-        // 🔥 mantém placeholder
-        if (
-          novaLista.length <
-          MAX_PARADAS + 1 &&
-          !possuiInputVazio
-        ) {
-          novaLista.push({
-            name: "",
-            formattedAddress:
-              "",
-            latitude: 0,
-            longitude: 0,
-            distancia:
-              "0km",
-            order: 0,
-          });
-        }
-
-        return reorganizarOrders(
-          novaLista,
-        );
-      },
-    );
+      return reorganizarOrders(novaLista);
+    });
   };
 
   // 🔥 NOVO
-  const handleConfirmar =
-    () => {
-      if (!podeConfirmar)
-        return;
+  const handleConfirmar = () => {
+    if (!podeConfirmar) return;
 
-      onConfirmar?.();
-    };
+    onConfirmar?.();
+  };
 
   useEffect(() => {
-    const padding =
-      360 +
-      itinerario.length * 45;
+    const padding = 360 + itinerario.length * 45;
 
-    onMapPaddingChange?.(
-      padding,
-    );
+    onMapPaddingChange?.(padding);
   }, [itinerario.length]);
 
   useEffect(() => {
-    const onBackPress =
-      () => {
-        if (visible) {
-          onClose();
+    const onBackPress = () => {
+      if (visible) {
+        onClose();
 
-          return true;
-        }
+        return true;
+      }
 
-        return false;
-      };
+      return false;
+    };
 
-    const subscription =
-      BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress,
-      );
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
 
-    return () =>
-      subscription.remove();
+    return () => subscription.remove();
   }, [visible, onClose]);
 
   // 🔥 IMPORTANTE:
@@ -349,9 +215,7 @@ export default function ViagemComParada({
     if (visible) {
       setIsMounted(true);
 
-      bottomSheetRef.current?.snapToIndex(
-        0,
-      );
+      bottomSheetRef.current?.snapToIndex(0);
     } else {
       setIsMounted(false);
 
@@ -359,265 +223,134 @@ export default function ViagemComParada({
     }
   }, [visible]);
 
-  const handleSheetChange =
-    useCallback(
-      (
-        index: number,
-      ) => {
-        if (index === -1) {
-          onClose();
-        }
-      },
-      [onClose],
-    );
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
-  if (!isMounted)
-    return null;
+  if (!isMounted) return null;
 
   return (
     <View
       pointerEvents="box-none"
-      style={[
-        StyleSheet.absoluteFill,
-        { zIndex: 30 },
-      ]}
+      style={[StyleSheet.absoluteFill, { zIndex: 30 }]}
     >
       <BottomSheet
         ref={bottomSheetRef}
-        snapPoints={
-          snapPoints
-        }
-        enableDynamicSizing={
-          false
-        }
-        onChange={
-          handleSheetChange
-        }
-        overDragResistanceFactor={
-          13
-        }
-        enablePanDownToClose={
-          false
-        }
-        backgroundStyle={
-          styles.bottomSheetBackground
-        }
-        handleIndicatorStyle={
-          styles.handleIndicator
-        }
+        snapPoints={snapPoints}
+        enableDynamicSizing={false}
+        onChange={handleSheetChange}
+        overDragResistanceFactor={13}
+        enablePanDownToClose={false}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.handleIndicator}
       >
-        <BottomSheetView
-          style={
-            styles.contentContainer
-          }
-        >
-          <View
-            style={
-              styles.containerTitle
-            }
-          >
-            <Text
-              style={
-                styles.title
-              }
-            >
-              Adicionar
-              paradas
-            </Text>
+        <BottomSheetView style={styles.contentContainer}>
+          <View style={styles.containerTitle}>
+            <Text style={styles.title}>Adicionar paradas</Text>
           </View>
 
-          <View
-            style={
-              styles.searchContainer
-            }
-          >
-            {itinerario.map(
-              (
-                item,
-                index,
-              ) => {
-                const isOrigem =
-                  index === 0;
+          <View style={styles.searchContainer}>
+            {itinerario.map((item, index) => {
+              const isOrigem = index === 0;
 
-                const isDestino =
-                  index ===
-                  itinerario.length -
-                  1;
+              const isDestino = index === itinerario.length - 1;
 
-                return (
-                  <View
-                    key={index}
-                    style={
-                      styles.rowContainer
-                    }
-                  >
-                    <View
-                      style={
-                        styles.lineContainer
-                      }
-                    >
-                      <View
-                        style={
-                          styles.markerWrapper
-                        }
-                      >
-                        {isOrigem ? (
-                          <View
-                            style={
-                              styles.startOuterCircle
-                            }
-                          >
-                            <View
-                              style={
-                                styles.startInnerCircle
-                              }
-                            />
-                          </View>
-                        ) : isDestino &&
-                          !item.name ? (
-                          <View
-                            style={[
-                              styles.numberBox,
-                              styles.lastNumberBoxHighlight,
-                            ]}
-                          >
-                            <Ionicons
-                              name="add"
-                              size={
-                                18
-                              }
-                              color="#FFF"
-                            />
-                          </View>
-                        ) : (
-                          <View
-                            style={[
-                              styles.numberBox,
-                              isDestino
-                                ? styles.lastNumberBoxHighlight
-                                : null,
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.numberText,
-                                isDestino
-                                  ? styles.lastNumberTextHighlight
-                                  : null,
-                              ]}
-                            >
-                              {
-                                index
-                              }
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-
-                      {!isDestino && (
+              return (
+                <View key={index} style={styles.rowContainer}>
+                  <View style={styles.lineContainer}>
+                    <View style={styles.markerWrapper}>
+                      {isOrigem ? (
+                        <View style={styles.startOuterCircle}>
+                          <View style={styles.startInnerCircle} />
+                        </View>
+                      ) : isDestino && !item.name ? (
                         <View
-                          style={
-                            styles.verticalLine
-                          }
-                        />
+                          style={[
+                            styles.numberBox,
+                            styles.lastNumberBoxHighlight,
+                          ]}
+                        >
+                          <Ionicons name="add" size={18} color="#FFF" />
+                        </View>
+                      ) : (
+                        <View
+                          style={[
+                            styles.numberBox,
+                            isDestino ? styles.lastNumberBoxHighlight : null,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.numberText,
+                              isDestino ? styles.lastNumberTextHighlight : null,
+                            ]}
+                          >
+                            {index}
+                          </Text>
+                        </View>
                       )}
                     </View>
 
-                    <View
-                      style={[
-                        styles.searchInput,
-                        isDestino &&
-                        styles.searchInputDestination,
-                      ]}
-                    >
-                      <TouchableOpacity
-                        style={
-                          styles.inputTouchable
-                        }
-                        onPress={() =>
-                          handleInputClick(
-                            index,
-                          )
-                        }
-                        activeOpacity={
-                          0.7
-                        }
-                      >
-                        <Text
-                          style={[
-                            styles.inputText,
-                            !item.name &&
-                            styles.placeholderText,
-                          ]}
-                          numberOfLines={
-                            1
-                          }
-                        >
-                          {item.name ||
-                            "Adicionar parada"}
-                        </Text>
-                      </TouchableOpacity>
-
-                      {!isOrigem &&
-                        item.name && (
-                          <View
-                            style={
-                              styles.actionButtons
-                            }
-                          >
-                            <TouchableOpacity
-                              onPress={() =>
-                                removerParada(
-                                  index,
-                                )
-                              }
-                              style={
-                                styles.removeButtonInline
-                              }
-                            >
-                              <Ionicons
-                                name="close"
-                                size={
-                                  20
-                                }
-                                color="#777"
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                    </View>
+                    {!isDestino && <View style={styles.verticalLine} />}
                   </View>
-                );
-              },
-            )}
+
+                  <View
+                    style={[
+                      styles.searchInput,
+                      isDestino && styles.searchInputDestination,
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.inputTouchable}
+                      onPress={() => handleInputClick(index)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.inputText,
+                          !item.name && styles.placeholderText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.name || "Adicionar parada"}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {!isOrigem && item.name && (
+                      <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                          onPress={() => removerParada(index)}
+                          style={styles.removeButtonInline}
+                        >
+                          <Ionicons name="close" size={20} color="#777" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
           </View>
 
-          <View
-            style={
-              styles.buttonContainer
-            }
-          >
+          <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
                 styles.confirmButton,
-                !podeConfirmar &&
-                styles.confirmButtonDisabled,
+                !podeConfirmar && styles.confirmButtonDisabled,
               ]}
-              onPress={
-                handleConfirmar
-              }
-              activeOpacity={
-                0.8
-              }
-              disabled={
-                !podeConfirmar
-              }
+              onPress={handleConfirmar}
+              activeOpacity={0.8}
+              disabled={!podeConfirmar}
             >
               <Text
                 style={[
                   styles.confirmButtonText,
-                  !podeConfirmar &&
-                  styles.confirmButtonTextDisabled,
+                  !podeConfirmar && styles.confirmButtonTextDisabled,
                 ]}
               >
                 Confirmar
@@ -628,263 +361,191 @@ export default function ViagemComParada({
       </BottomSheet>
 
       <FolhaBuscarEndereco
-        visible={
-          showFolhaBuscarEndereco
-        }
+        visible={showFolhaBuscarEndereco}
         onClose={() => {
-          setShowFolhaBuscarEndereco(
-            false,
-          );
+          setShowFolhaBuscarEndereco(false);
 
-          onShowBuscarEndereco?.(
-            false,
-          );
+          onShowBuscarEndereco?.(false);
         }}
-        onSheetChange={
-          handleSheetStateChange
-        }
+        onSheetChange={handleSheetStateChange}
         servico={"corrida"}
-        onSelecionarEndereco={
-          handleSelecionarEndereco
-        }
+        onSelecionarEndereco={handleSelecionarEndereco}
       />
     </View>
   );
 }
 
-const styles =
-  StyleSheet.create({
-    containerTitle: {
-      alignItems: "center",
-    },
+const styles = StyleSheet.create({
+  containerTitle: {
+    alignItems: "center",
+  },
 
-    bottomSheetBackground:
-    {
-      backgroundColor:
-        "#FFF",
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-    },
+  bottomSheetBackground: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
 
-    handleIndicator: {
-      backgroundColor:
-        "#DDD",
-      width: 40,
-      height: 4,
-    },
+  handleIndicator: {
+    backgroundColor: "#DDD",
+    width: 40,
+    height: 4,
+  },
 
-    contentContainer: {
-      flex: 1,
-      paddingHorizontal: 24,
-      paddingTop: 8,
-    },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
 
-    header: {
-      flexDirection: "row",
-      justifyContent:
-        "space-between",
-      alignItems:
-        "flex-start",
-    },
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 6,
+  },
 
-    backButton: {
-      marginTop: 10,
-    },
+  searchContainer: {
+    flexDirection: "column",
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
 
-    title: {
-      fontSize: 20,
-      fontWeight: "700",
-      color: "#000",
-      marginBottom: 6,
-    },
+  rowContainer: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
 
-    searchContainer: {
-      flexDirection:
-        "column",
-      marginBottom: 24,
-      paddingHorizontal: 16,
-    },
+  lineContainer: {
+    alignItems: "center",
+    marginRight: 14,
+    width: 24,
+    position: "relative",
+  },
 
-    rowContainer: {
-      flexDirection: "row",
-      alignItems:
-        "stretch",
-    },
+  markerWrapper: {
+    width: 24,
+    height: 56,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 2,
+  },
 
-    lineContainer: {
-      alignItems: "center",
-      marginRight: 14,
-      width: 24,
-      position: "relative",
-    },
+  startOuterCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#666",
+    backgroundColor: "#FFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-    markerWrapper: {
-      width: 24,
-      height: 56,
-      justifyContent:
-        "center",
-      alignItems:
-        "center",
-      zIndex: 2,
-    },
+  startInnerCircle: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#111",
+  },
 
-    startOuterCircle: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 2,
-      borderColor:
-        "#666",
-      backgroundColor:
-        "#FFF",
-      justifyContent:
-        "center",
-      alignItems:
-        "center",
-    },
+  numberBox: {
+    width: 20,
+    height: 20,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 3,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-    startInnerCircle: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor:
-        "#111",
-    },
+  numberText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#333",
+  },
 
-    numberBox: {
-      width: 20,
-      height: 20,
-      backgroundColor:
-        "#E0E0E0",
-      borderRadius: 3,
-      justifyContent:
-        "center",
-      alignItems:
-        "center",
-    },
+  lastNumberBoxHighlight: {
+    backgroundColor: "#FF5500",
+  },
 
-    numberText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: "#333",
-    },
+  lastNumberTextHighlight: {
+    color: "#FFF",
+  },
 
-    lastNumberBoxHighlight:
-    {
-      backgroundColor:
-        "#FF5500",
-    },
+  verticalLine: {
+    position: "absolute",
+    width: 2,
+    top: 38,
+    bottom: -18,
+    backgroundColor: "#DDD",
+    zIndex: 1,
+  },
 
-    lastNumberTextHighlight:
-    {
-      color: "#FFF",
-    },
+  searchInput: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ECECEC",
+  },
 
-    verticalLine: {
-      position:
-        "absolute",
-      width: 2,
-      top: 38,
-      bottom: -18,
-      backgroundColor:
-        "#DDD",
-      zIndex: 1,
-    },
+  searchInputDestination: {
+    borderBottomColor: "#FFD7BF",
+  },
 
-    searchInput: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems:
-        "center",
-      minHeight: 56,
-      borderBottomWidth: 1,
-      borderBottomColor:
-        "#ECECEC",
-    },
+  inputTouchable: {
+    flex: 1,
+    paddingVertical: 12,
+  },
 
-    searchInputDestination:
-    {
-      borderBottomColor:
-        "#FFD7BF",
-    },
+  inputText: {
+    fontSize: 17,
+    color: "#111",
+    fontWeight: "500",
+  },
 
-    inputTouchable: {
-      flex: 1,
-      paddingVertical: 12,
-    },
+  placeholderText: {
+    color: "#999",
+    fontWeight: "400",
+  },
 
-    inputText: {
-      fontSize: 17,
-      color: "#111",
-      fontWeight: "500",
-    },
+  removeButtonInline: {
+    padding: 4,
+    marginLeft: 2,
+  },
 
-    placeholderText: {
-      color: "#999",
-      fontWeight: "400",
-    },
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
-    addButtonInline: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor:
-        "#F5F5F5",
-      justifyContent:
-        "center",
-      alignItems:
-        "center",
-      marginLeft: 8,
-    },
+  buttonContainer: {
+    marginTop: 24,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
 
-    removeButtonInline: {
-      padding: 4,
-      marginLeft: 2,
-    },
+  confirmButton: {
+    backgroundColor: "#FFD200",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
 
-    actionButtons: {
-      flexDirection: "row",
-      alignItems:
-        "center",
-    },
+  confirmButtonDisabled: {
+    backgroundColor: "#f0f0f0",
+  },
 
-    actionButton: {
-      marginRight: 4,
-      padding: 4,
-    },
+  confirmButtonText: {
+    color: "#000",
+    fontSize: 18,
+    fontWeight: "700",
+  },
 
-    buttonContainer: {
-      marginTop: 24,
-      marginBottom: 32,
-      paddingHorizontal: 16,
-    },
-
-    confirmButton: {
-      backgroundColor:
-        "#FFD200",
-      flexDirection: "row",
-      alignItems:
-        "center",
-      justifyContent:
-        "center",
-      paddingVertical: 16,
-      borderRadius: 12,
-    },
-
-    confirmButtonDisabled:
-    {
-      backgroundColor:
-        "#f0f0f0",
-    },
-
-    confirmButtonText: {
-      color: "#000",
-      fontSize: 18,
-      fontWeight: "700",
-    },
-
-    confirmButtonTextDisabled:
-    {
-      color: "#999",
-    },
-  });
+  confirmButtonTextDisabled: {
+    color: "#999",
+  },
+});

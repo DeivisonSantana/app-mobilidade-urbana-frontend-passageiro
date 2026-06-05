@@ -1,35 +1,42 @@
-import ParaOndeVamos from "@/components/ParaOndeVamos";
 import { Ionicons } from "@expo/vector-icons";
+
 import BottomSheet, {
   BottomSheetFlatList,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+
+import React, { useCallback, useMemo, useRef } from "react";
+
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-// 🔹 Definição das props que o componente recebe
+// 🔥 NOVAS PROPS
 interface props {
   onSheetChange: (index: number) => void;
-  onAdicionarParada?: () => void; // Nova prop para comunicar o clique do botão +
+
+  // 🔥 abre ParaOndeVamos
+  onPressParaOndeVamos?: () => void;
 }
 
-export default function FolhaInferior({ onSheetChange, onAdicionarParada }: props) {
-  // snap points do bottomsheet
+export default function FolhaInferior({
+  onSheetChange,
+  onPressParaOndeVamos,
+}: props) {
+  // snap points
   const snapPoints = useMemo(() => ["64%", "80%"], []);
+
   const sheetRef = useRef<BottomSheet>(null);
-  const [showParaOndeVamos, setShowParaOndeVamos] = useState(false);
 
   // eventos
   const handleSheetChange = useCallback(
     (index: number) => {
       console.log("handleSheetChange", index);
-      // ✨ CHAMANDO CALLBACK: Notifica o componente pai sobre o índice atual
+
       onSheetChange(index);
     },
     [onSheetChange],
   );
 
-  // dados das últimas corridas
+  // dados mock
   const data = useMemo(
     () => [
       {
@@ -37,6 +44,7 @@ export default function FolhaInferior({ onSheetChange, onAdicionarParada }: prop
         rua: "Av. Paulista, 1000",
         cidade: "São Paulo, SP",
       },
+
       {
         id: "2",
         rua: "Rua das Flores, 45",
@@ -46,17 +54,7 @@ export default function FolhaInferior({ onSheetChange, onAdicionarParada }: prop
     [],
   );
 
-  // Handler para quando o usuário clica no botão + dentro do ParaOndeVamos
-  const handleAdicionarParada = useCallback(() => {
-    // Fecha o ParaOndeVamos
-    setShowParaOndeVamos(false);
-    // Propaga o evento para o componente pai (Home)
-    if (onAdicionarParada) {
-      onAdicionarParada();
-    }
-  }, [onAdicionarParada]);
-
-  // render item da lista
+  // render item
   const renderItem = useCallback(
     ({ item, index }: { item: any; index: number }) => (
       <TouchableOpacity>
@@ -69,12 +67,17 @@ export default function FolhaInferior({ onSheetChange, onAdicionarParada }: prop
             name="time-outline"
             size={20}
             color="#666"
-            style={{ marginRight: 12, marginTop: 2 }}
+            style={{
+              marginRight: 12,
+              marginTop: 2,
+            }}
           />
+
           <View>
             <Text className="text-base font-semibold text-gray-800">
               {item.rua}
             </Text>
+
             <Text className="text-sm text-gray-500">{item.cidade}</Text>
           </View>
         </View>
@@ -90,33 +93,29 @@ export default function FolhaInferior({ onSheetChange, onAdicionarParada }: prop
         snapPoints={snapPoints}
         enableDynamicSizing={false}
         onChange={handleSheetChange}
-        // ✨ MODIFICAÇÃO: Configurações para o efeito de arrastar para baixo e voltar:
-        // 1. overDragResistanceFactor: Controla a resistência ao arrastar além do
-        //    último snap point. Um valor maior torna o gesto mais 'elástico' e
-        //    limita a distância de arrasto. O valor 3 é um bom ponto de partida.
         overDragResistanceFactor={13}
-        // 2. enablePanDownToClose: Garante que o BottomSheet não feche
-        //    quando arrastado para baixo, fazendo com que ele volte (snap back)
-        //    para o snap point ativo (como visto no vídeo).
         enablePanDownToClose={false}
       >
-        {/* Campo de pesquisa */}
         <BottomSheetView className="flex-1 items-center px-4">
+          {/* 🔥 INPUT */}
           <TouchableOpacity
             style={styles.inputContainer}
             activeOpacity={0.7}
-            onPress={() => setShowParaOndeVamos(true)}
+            onPress={onPressParaOndeVamos}
           >
             <Ionicons
               name="search"
               size={30}
               color="black"
-              style={{ marginRight: 8 }}
+              style={{
+                marginRight: 8,
+              }}
             />
+
             <Text style={styles.inputText}>Para onde vamos?</Text>
           </TouchableOpacity>
 
-          {/* Lista de últimas corridas */}
+          {/* 🔥 últimas corridas */}
           <BottomSheetFlatList
             data={data}
             keyExtractor={(i: any) => i.id}
@@ -125,12 +124,6 @@ export default function FolhaInferior({ onSheetChange, onAdicionarParada }: prop
           />
         </BottomSheetView>
       </BottomSheet>
-      
-      <ParaOndeVamos
-        visible={showParaOndeVamos}
-        onClose={() => setShowParaOndeVamos(false)}
-        onAdicionarParada={handleAdicionarParada} // Passa o handler para o ParaOndeVamos
-      />
     </View>
   );
 }
@@ -138,16 +131,25 @@ export default function FolhaInferior({ onSheetChange, onAdicionarParada }: prop
 const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
+
     alignItems: "center",
+
     backgroundColor: "#f1f5f8",
+
     borderRadius: 12,
+
     padding: 12,
+
     width: "100%",
   },
+
   inputText: {
     marginLeft: 8,
+
     fontSize: 29,
+
     fontWeight: "600",
+
     color: "black",
   },
 });
