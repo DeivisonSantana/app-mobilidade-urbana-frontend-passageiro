@@ -153,16 +153,16 @@ export default function Home() {
           prev.map((item, index) =>
             index === 0
               ? {
-                ...item,
+                  ...item,
 
-                name: addressName,
+                  name: addressName,
 
-                formattedAddress: addressName,
+                  formattedAddress: addressName,
 
-                latitude: userRegion.latitude,
+                  latitude: userRegion.latitude,
 
-                longitude: userRegion.longitude,
-              }
+                  longitude: userRegion.longitude,
+                }
               : item,
           ),
         );
@@ -206,11 +206,11 @@ export default function Home() {
 
   // 🔥 CANCELA CORRIDA
   const handleCancelarViagem = useCallback(() => {
-    setShowFolhaInferior(true)
+    setShowFolhaInferior(true);
     setShowViagemComParada(false);
 
     setShowFolhaEscolherOferta(false);
-    console.log(showFolhaInferior, ' showFolhaInferior handleCancelarViagem')
+    console.log(showFolhaInferior, " showFolhaInferior handleCancelarViagem");
     // 🔥 limpa rota mantendo origem
     setItinerario((prev) => [
       prev[0],
@@ -241,21 +241,12 @@ export default function Home() {
     }
   }, []);
 
-  // 🔥 prossegue fluxo
-  const handleProsseguirParaOferta = useCallback(() => {
-    setProgesseguirParaOferta(true);
-    setShowParaOndeVamos(false);
-    setShowViagemComParada(false);
-    setShowFolhaEscolherOferta(true);
-    console.log(progesseguirParaOferta, 'progesseguirParaOferta')
-  }, []);
-
   // 🔥 voltar oferta → edição
   const handleVoltarParaHome = useCallback(() => {
-    setShowFolhaInferior(true)
-    setProgesseguirParaOferta(false)
+    setShowFolhaInferior(true);
+    setProgesseguirParaOferta(false);
     setShowFolhaEscolherOferta(false);
-    console.log(showFolhaInferior, 'showFolhaInferior')
+    console.log(showFolhaInferior, "showFolhaInferior");
   }, []);
 
   // 🔥 lista operacional mapa
@@ -296,7 +287,7 @@ export default function Home() {
       />
 
       {/* 🔥 botão voltar */}
-      {(showViagemComParada || showFolhaEscolherOferta) &&
+      {/* {(showViagemComParada || showFolhaEscolherOferta) &&
         !showBuscarEndereco && (
           <TouchableOpacity
             onPress={
@@ -309,7 +300,17 @@ export default function Home() {
           >
             <Ionicons name="chevron-back" size={26} color="#000" />
           </TouchableOpacity>
-        )}
+        )} */}
+
+      {showViagemComParada && !showBuscarEndereco && (
+        <TouchableOpacity
+          onPress={handleCancelarViagem}
+          activeOpacity={0.8}
+          style={styles.backFloatingButton}
+        >
+          <Ionicons name="chevron-back" size={26} color="#000" />
+        </TouchableOpacity>
+      )}
 
       {/* 🔥 FolhaInferior */}
       {showFolhaInferior && (
@@ -343,9 +344,9 @@ export default function Home() {
         visible={showViagemComParada}
         onClose={handleCancelarViagem}
         onConfirmar={() => {
-          setShowFolhaInferior(false)
-          setShowViagemComParada(false)
-          setShowFolhaEscolherOferta(true)
+          setShowFolhaInferior(false);
+          setShowViagemComParada(false);
+          setShowFolhaEscolherOferta(true);
         }}
         itinerario={itinerario}
         setItinerario={setItinerario}
@@ -385,36 +386,26 @@ const styles = StyleSheet.create({
 
   backFloatingButton: {
     position: "absolute",
-
     top: 40,
-
     left: 18,
-
     width: 48,
-
     height: 48,
-
     borderRadius: 28,
-
     backgroundColor: "#FFF",
 
     justifyContent: "center",
-
     alignItems: "center",
 
-    zIndex: 999,
+    zIndex: 1,
 
     shadowColor: "#000",
-
     shadowOffset: {
       width: 0,
       height: 2,
     },
-
     shadowOpacity: 0.18,
-
     shadowRadius: 6,
 
-    elevation: 8,
+    elevation: 1,
   },
 });
